@@ -1,11 +1,9 @@
-import play.sbt.PlayImport._
-
 name         := "play-benford-analysis"
 organization := "com.dvgodoy"
 version      := "0.0.1-SNAPSHOT"
 scalaVersion := Version.scala
 
-lazy val root = (project in file(".")).enablePlugins(PlayScala)
+lazy val playBenfordAnalysis = (project in file(".")).enablePlugins(PlayScala)
 
 scalaSource in Compile <<= baseDirectory / "src/scala"
 
@@ -13,7 +11,7 @@ libraryDependencies ++= Dependencies.sparkAkkaHadoop
 
 unmanagedJars in Compile += file("lib/spark-benford-analysis_2.11-0.0.1-SNAPSHOT.jar")
 
-//libraryDependencies += "com.dvgodoy" %% "spark-benford-analysis" % "0.0.1"
+//libraryDependencies += "com.dvgodoy" %% "spark-benford-analysis" % "0.0.1-SNAPSHOT"
 
 libraryDependencies  ++= Seq(
   // other dependencies here
@@ -29,16 +27,11 @@ libraryDependencies  ++= Seq(
   "org.scalanlp" %% "breeze-viz" % "0.11.2"
 )
 
-lazy val playAsync: Project = project
-  .in(file("."))
-  .enablePlugins(PlayScala)
-  .settings(
-    cleanFiles <+= baseDirectory { base => base / "logs" }
-  )
-
 dependencyOverrides ++= Set(
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4"
 )
+
+resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 
 releaseSettings
 

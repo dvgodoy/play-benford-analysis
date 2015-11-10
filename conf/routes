@@ -2,10 +2,10 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET        /                    controllers.HelloController.index
-GET        /count               controllers.HelloController.count
-GET        /list                controllers.HelloController.list
-GET        /sum/:n              controllers.HelloController.sum(n)
+GET        /                    controllers.Benford.index
+GET        /count               controllers.Benford.count
+GET        /list                controllers.Benford.list
+GET        /sum/:n              controllers.Benford.sum(n)
 
 # Home page
 

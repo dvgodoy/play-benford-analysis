@@ -4,6 +4,8 @@ import com.dvgodoy.spark.benford.constants._
 import models.SparkCommons
 import play.api.libs.json.{JsNumber, JsObject}
 import play.api.mvc.{Action, Controller}
+//import org.json4s.JsonDSL._
+//import org.json4s.jackson.JsonMethods._
 
 class Benford extends Controller {
   lazy val rdd = SparkCommons.sc.parallelize(1 to 1000)
@@ -26,7 +28,8 @@ class Benford extends Controller {
    */
   def list = Action {
     //Ok(rdd.collect().toList.toString)
-    Ok(BenfordProbabilitiesD1D2.toList.toString)
+    //Ok(compact(org.json4s.jackson.JsonMethods.render(BenfordFrequencies.toJson("test"))))
+    Ok(BenfordFrequencies.toJson("test")._2)
   }
 
   /**
