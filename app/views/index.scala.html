@@ -1,7 +1,29 @@
-@(test: Int)
+@(test: String)
 
 @main("Counter") {
 <h2>
-    @test vehicles found
+    @test
 </h2>
+<div id="content"></div>
+<script type="text/javascript">
+    $(function(){
+        get_json('@routes.Benf.count', process_json_idCI);
+    });
+
+    var process_json_idCI = function(data){
+        var contentDiv=$("div#content");
+        contentDiv.append("<ul>");
+        contentDiv.append("<li>" + data.id + "</li>");
+        contentDiv.append("<li>" + data.level + "</li>");
+        $.each(data.CIs,function(key ,val){
+            contentDiv.append("<li>" + key + "</li>");
+            contentDiv.append("<li>" + val.n + "</li>");
+            contentDiv.append("<li>" + val.mean[0].alpha + "</li>");
+            contentDiv.append("<li>" + val.mean[0].lower + "</li>");
+            contentDiv.append("<li>" + val.mean[0].upper + "</li>");
+            contentDiv.append("<li>" + val.mean[0].t0 + "</li>");
+        });
+        contentDiv.append("</ul>");
+    };
+</script>
 }

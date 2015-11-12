@@ -20,15 +20,14 @@ libraryDependencies  ++= Seq(
   "org.scala-lang.modules" % "scala-async_2.11" % "0.9.6-RC2",
   ws,
   specs2 % Test,
-  "org.json4s" %% "json4s-native" % "3.2.10",
-  "org.json4s" %% "json4s-jackson" % "3.2.10",
   "org.scalanlp" %% "breeze" % "0.11.2",
   "org.scalanlp" %% "breeze-natives" % "0.11.2",
   "org.scalanlp" %% "breeze-viz" % "0.11.2"
 )
 
 dependencyOverrides ++= Set(
-  "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4"
+  "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4",
+  "com.google.guava" % "guava" % "11.0.2"
 )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"

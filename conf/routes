@@ -2,10 +2,17 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET        /                    controllers.Benford.index
-GET        /count               controllers.Benford.count
-GET        /list                controllers.Benford.list
-GET        /sum/:n              controllers.Benford.sum(n)
+GET        /                    controllers.Benf.PageIndex
+GET        /count               controllers.Benf.count
+GET        /list                controllers.Benf.list
+GET        /sum/:n              controllers.Benf.sum(n)
+
+GET        /root                controllers.Application.root
+GET        /remote              controllers.Application.rootremote
+GET        /carscounter         controllers.Benf.carscounter
+
+GET        /rootJson            controllers.Application.rootJson
+GET        /remoteJson          controllers.Application.remoteJson
 
 # Home page
 

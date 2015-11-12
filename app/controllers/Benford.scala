@@ -1,16 +1,16 @@
 package controllers
 
-import com.dvgodoy.spark.benford.constants._
+import com.dvgodoy.spark.benford.distributions.{Benford, Bootstrap}
 import models.SparkCommons
-import play.api.libs.json.{JsNumber, JsObject}
-import play.api.mvc.{Action, Controller}
-//import org.json4s.JsonDSL._
-//import org.json4s.jackson.JsonMethods._
+import play.api.libs.json._
+import play.api.mvc._
 
-class Benford extends Controller {
+import scala.concurrent.Future
+
+class Benf extends Controller {
   lazy val rdd = SparkCommons.sc.parallelize(1 to 1000)
 
-  def index = Action {
+  def PageIndex = Action {
     Ok("hello world")
   }
 
@@ -18,8 +18,21 @@ class Benford extends Controller {
    * number of elements
    * @return
    */
-  def count = Action {
-    Ok(rdd.count().toString)
+  def count = Action.async {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val boot = Bootstrap()
+    val benf = Benford()
+    val numSamples = 1000
+
+    val res: Future[Result] = for {
+      data <- Future(boot.loadData(SparkCommons.sc, "/media/dvgodoy/FILES/DataScienceRetreat/Portfolio/spark-benford-analysis/src/test/resources/datalevels.csv"))
+      sampleRDD <- Future(boot.calcSampleCIs(SparkCommons.sc, data, numSamples))
+      benfordRDD <- Future(benf.calcBenfordCIs(SparkCommons.sc, data, numSamples))
+      resultsRDD <- Future(boot.calcResults(sampleRDD, benfordRDD))
+
+     ci <- Future(boot.showCIsByGroupId(sampleRDD, 0))
+    } yield Ok(ci)
+    res
   }
 
   /**
@@ -27,9 +40,9 @@ class Benford extends Controller {
    * @return
    */
   def list = Action {
-    //Ok(rdd.collect().toList.toString)
+    Ok(rdd.collect().toList.toString)
     //Ok(compact(org.json4s.jackson.JsonMethods.render(BenfordFrequencies.toJson("test"))))
-    Ok(BenfordFrequencies.toJson("test")._2)
+    //Ok(BenfordFrequencies.toJson("test")._2)
   }
 
   /**
@@ -38,10 +51,11 @@ class Benford extends Controller {
    * @return
    */
   def sum(n:String) = Action {
-    Ok(rdd.filter(_ <= n.toInt).sum().toString)
+    //Ok(rdd.filter(_ <= n.toInt).sum().toString)
+    Ok(JsObject(Seq("test" -> JsNumber(40))))
   }
 
   def carscounter = Action {
-    Ok(JsObject(Seq("counter" -> JsNumber(40))))
+    Ok(JsObject(Seq("test" -> JsNumber(40))))
   }
 }
