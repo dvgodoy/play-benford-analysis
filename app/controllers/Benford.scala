@@ -1,61 +1,92 @@
 package controllers
 
-import com.dvgodoy.spark.benford.distributions.{Benford, Bootstrap}
-import models.SparkCommons
-import play.api.libs.json._
+import models.BenfordCommons
 import play.api.mvc._
 
 import scala.concurrent.Future
 
-class Benf extends Controller {
-  lazy val rdd = SparkCommons.sc.parallelize(1 to 1000)
+class BenfordBootstrap extends Controller {
 
-  def PageIndex = Action {
-    Ok("hello world")
+  def load = Action.async {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val filePath = "/media/dvgodoy/FILES/DataScienceRetreat/Portfolio/spark-benford-analysis/src/test/resources/datalevels.csv"
+    val res: Future[Result] = for {
+      ok <- Future(BenfordCommons.loadData(filePath))
+    } yield Ok("load OK")
+    res
   }
 
-  /**
-   * number of elements
-   * @return
-   */
-  def count = Action.async {
+  def calculate = Action.async {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val boot = Bootstrap()
-    val benf = Benford()
-    val numSamples = 1000
-
+    BenfordCommons.setNumberSamples(1000)
     val res: Future[Result] = for {
-      data <- Future(boot.loadData(SparkCommons.sc, "/media/dvgodoy/FILES/DataScienceRetreat/Portfolio/spark-benford-analysis/src/test/resources/datalevels.csv"))
-      sampleRDD <- Future(boot.calcSampleCIs(SparkCommons.sc, data, numSamples))
-      benfordRDD <- Future(benf.calcBenfordCIs(SparkCommons.sc, data, numSamples))
-      resultsRDD <- Future(boot.calcResults(sampleRDD, benfordRDD))
+      ok <- Future(BenfordCommons.calculate)
+    } yield Ok("calc OK")
+    res
+  }
 
-     ci <- Future(boot.showCIsByGroupId(sampleRDD, 0))
+  def getCIsByGroup(id: Int) = Action.async {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val res: Future[Result] = for {
+      ci <- Future(BenfordCommons.getCIsByGroupId(id))
     } yield Ok(ci)
     res
   }
 
-  /**
-   * list them all
-   * @return
-   */
-  def list = Action {
-    Ok(rdd.collect().toList.toString)
-    //Ok(compact(org.json4s.jackson.JsonMethods.render(BenfordFrequencies.toJson("test"))))
-    //Ok(BenfordFrequencies.toJson("test")._2)
+  def getBenfordCIsByGroup(id: Int) = Action.async {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val res: Future[Result] = for {
+      ci <- Future(BenfordCommons.getBenfordCIsByGroupId(id))
+    } yield Ok(ci)
+    res
   }
 
-  /**
-   * make a filter action on the rdd and returns the sum of the remaining numbers
-   * @param n
-   * @return
-   */
-  def sum(n:String) = Action {
-    //Ok(rdd.filter(_ <= n.toInt).sum().toString)
-    Ok(JsObject(Seq("test" -> JsNumber(40))))
+  def getCIsByLevel(level: Int) = Action.async {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val res: Future[Result] = for {
+      ci <- Future(BenfordCommons.getCIsByLevel(level))
+    } yield Ok(ci)
+    res
   }
 
-  def carscounter = Action {
-    Ok(JsObject(Seq("test" -> JsNumber(40))))
+  def getBenfordCIsByLevel(level: Int) = Action.async {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val res: Future[Result] = for {
+      ci <- Future(BenfordCommons.getBenfordCIsByLevel(level))
+    } yield Ok(ci)
+    res
   }
+
+  def getResultsByGroup(id: Int) = Action.async {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val res: Future[Result] = for {
+      r <- Future(BenfordCommons.getResultsByGroupId(id))
+    } yield Ok(r)
+    res
+  }
+
+  def getResultsByLevel(level: Int) = Action.async {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val res: Future[Result] = for {
+      r <- Future(BenfordCommons.getResultsByLevel(level))
+    } yield Ok(r)
+    res
+  }
+
+  def getFreqByGroup(id: Int) = Action.async {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val res: Future[Result] = for {
+      f <- Future(BenfordCommons.getFrequenciesByGroupId(id))
+    } yield Ok(f)
+    res
+  }
+
+  def getFreqByLevel(level: Int) = Action.async {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val res: Future[Result] = for {
+      f <- Future(BenfordCommons.getFrequenciesByLevel(level))
+    } yield Ok(f)
+    res
+  }
+
 }

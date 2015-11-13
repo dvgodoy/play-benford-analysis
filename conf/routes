@@ -2,17 +2,18 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET        /                    controllers.Benf.PageIndex
-GET        /count               controllers.Benf.count
-GET        /list                controllers.Benf.list
-GET        /sum/:n              controllers.Benf.sum(n)
-
-GET        /root                controllers.Application.root
-GET        /remote              controllers.Application.rootremote
-GET        /carscounter         controllers.Benf.carscounter
-
-GET        /rootJson            controllers.Application.rootJson
-GET        /remoteJson          controllers.Application.remoteJson
+GET        /                            controllers.Application.root
+GET        /load                        controllers.BenfordBootstrap.load
+GET        /calc                        controllers.BenfordBootstrap.calculate
+GET        /ci                          controllers.Application.ci
+GET        /CIsByGroup/:id              controllers.BenfordBootstrap.getCIsByGroup(id: Int)
+GET        /BenfCIsByGroup/:id          controllers.BenfordBootstrap.getBenfordCIsByGroup(id: Int)
+GET        /CIsByLevel/:level           controllers.BenfordBootstrap.getCIsByLevel(level: Int)
+GET        /BenfCIsByLevel/:level       controllers.BenfordBootstrap.getBenfordCIsByLevel(level: Int)
+GET        /ResultsByGroup/:id          controllers.BenfordBootstrap.getResultsByGroup(id: Int)
+GET        /ResultsByLevel/:level       controllers.BenfordBootstrap.getResultsByLevel(level: Int)
+GET        /FreqByGroup/:id             controllers.BenfordBootstrap.getFreqByGroup(id: Int)
+GET        /FreqByLevel/:level          controllers.BenfordBootstrap.getFreqByLevel(level: Int)
 
 # Home page
 

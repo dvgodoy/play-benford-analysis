@@ -1,0 +1,10 @@
+@(id: Int)
+
+@main("CI test") {
+    <script type="text/javascript">
+        var url = "@routes.BenfordBootstrap.getCIsByGroup(id)"
+        $(function(){
+            get_json(url, process_CIsByGroup);
+        });
+    </script>
+}
