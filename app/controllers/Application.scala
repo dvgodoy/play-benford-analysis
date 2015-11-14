@@ -2,7 +2,9 @@ package controllers
 
 import javax.inject.Inject
 
-import play.api.libs.ws.WSClient
+import models.SparkCommons
+import play.api.Play.current
+import play.api.libs.ws.{WS, WSClient}
 import play.api.mvc._
 import views.html._
 
@@ -12,8 +14,12 @@ class Application @Inject()(ws: WSClient) extends Controller {
     Ok(index("This is loading..."))
   }
 
-  def ci = Action {
-    Ok(cigroup(0))
+  def progress = Action.async { request =>
+    import scala.concurrent.ExecutionContext.Implicits.global
+    WS.url(SparkCommons.metricsURL)
+      .withHeaders("Accept" -> "application/json")
+      .get()
+      .map { response => Ok(response.body)}
   }
 
   /*val html = scala.io.Source.fromURL("https://spark.apache.org/").mkString

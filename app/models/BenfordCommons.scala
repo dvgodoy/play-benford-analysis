@@ -14,9 +14,9 @@ object BenfordCommons {
   private var resultsRDD: RDD[ResultsByLevel] = _
   private var numberSamples: Int = 25000
 
-  private def calcSample: Unit = sampleRDD = boot.calcSampleCIs(SparkCommons.sc, data, numberSamples)
-  private def calcBenford: Unit = benfordRDD = benf.calcBenfordCIs(SparkCommons.sc, data, numberSamples)
-  private def calcResults: Unit = resultsRDD = boot.calcResults(sampleRDD, benfordRDD)
+  private def calcSample: Unit = { sampleRDD = boot.calcSampleCIs(SparkCommons.sc, data, numberSamples); sampleRDD.cache() }
+  private def calcBenford: Unit = { benfordRDD = benf.calcBenfordCIs(SparkCommons.sc, data, numberSamples); benfordRDD.cache() }
+  private def calcResults: Unit = { resultsRDD = boot.calcResults(sampleRDD, benfordRDD); resultsRDD.cache() }
 
   def setNumberSamples(numSamples: Int): Unit = numberSamples = numSamples
   def getNumberSamples: Int = numberSamples
@@ -30,4 +30,5 @@ object BenfordCommons {
   def getResultsByLevel(level: Int): JsValue = boot.getResultsByLevel(resultsRDD, level)
   def getFrequenciesByGroupId(groupId: Int): JsValue = boot.getFrequenciesByGroupId(data, groupId)
   def getFrequenciesByLevel(level: Int): JsValue = boot.getFrequenciesByLevel(data, level)
+  def getGroups: JsValue = boot.getGroups(data)
 }
