@@ -10,8 +10,10 @@ import views.html._
 
 class Application @Inject()(ws: WSClient) extends Controller {
 
-  def root = Action {
-    Ok(index("This is loading..."))
+  def root = Action { request =>
+    val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
+    val juuid = request.session.get("job").getOrElse("0")
+    Ok(index(uuid)).withSession(("id", uuid), ("job", juuid))
   }
 
   def progress = Action.async { request =>

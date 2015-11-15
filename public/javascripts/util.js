@@ -1,3 +1,5 @@
+var sampleCIData = "";
+
 var get_json = function(url, funcSuccess, funcError, intervalId) {
     $.ajax({
         url: url,
@@ -10,7 +12,7 @@ var get_json = function(url, funcSuccess, funcError, intervalId) {
             funcSuccess(data, intervalId);
         },
         error: function(jqXHR, textStatus, errorThrown){
-            funcError();
+            funcError(data);
         },
         complete: function(jqXHR,textStatus){
         }
@@ -35,7 +37,7 @@ var accountingCalc = function(url){
     $(function(){
         $("p#calcStatus").text("Calculating...")
         get_json(url,
-                function(){calcStatus = 1; $("p#calcStatus").text("Calculated!");},
+                function(data){calcStatus = 1; $("p#calcStatus").text(data);},
                 function(){calcStatus = -1; $("p#calcStatus").text("Error!");});
     });
 }
@@ -59,25 +61,23 @@ var accountingResults = function(url){
     });
 }
 
-var sampleCIData = "";
-
 var processCIsByGroup = function(data, intervalId){
-    clearInterval(intervalId);
-    sampleCIData = data;
-    var contentDiv=$("div#results");
-    contentDiv.html("");
-    contentDiv.append("<ul>");
-    contentDiv.append("<li>" + data[0].id + "</li>");
-    contentDiv.append("<li>" + data[0].level + "</li>");
-    $.each(data[0].CIs,function(key ,val){
-        contentDiv.append("<li>" + key + "</li>");
-        contentDiv.append("<li>" + val.n + "</li>");
-        contentDiv.append("<li>" + val.mean[0].alpha + "</li>");
-        contentDiv.append("<li>" + val.mean[0].lower + "</li>");
-        contentDiv.append("<li>" + val.mean[0].upper + "</li>");
-        contentDiv.append("<li>" + val.mean[0].t0 + "</li>");
+    $(function(){
+        clearInterval(intervalId);
+        $("button#btnProgress").click();
+        sampleCIData = data;
+        var contentDiv=$("div#results");
+        contentDiv.html("");
+        contentDiv.append("<ul>");
+        contentDiv.append("<li>" + data[0].id + "</li>");
+        contentDiv.append("<li>" + data[0].level + "</li>");
+        $.each(data[0].CIs,function(key ,val){
+            contentDiv.append("<li>" + key + "</li>");
+            contentDiv.append("<li>" + val.n + "</li>");
+            contentDiv.append("<li>" + val.mean + "</li>");
+        });
+        contentDiv.append("</ul>");
     });
-    contentDiv.append("</ul>");
 };
 
 var sparkProgress = function(url){
@@ -96,3 +96,19 @@ var sparkProgress = function(url){
                 function(){});
     });
 }
+
+var showCurrentDiv = function(divName) {
+    $(function(){
+        $("div#description").toggle(false);
+        $("div#accounting").toggle(false);
+        $("div#image").toggle(false);
+        $("div#" + divName).toggle(true);
+    });
+}
+
+$(function(){
+    $("a#linkHome").click(function(){showCurrentDiv("description");});
+    $("a#linkAccounting").click(function(e){e.preventDefault();showCurrentDiv("accounting");});
+    $("a#linkImage").click(function(){showCurrentDiv("image");});
+    showCurrentDiv("description");
+});

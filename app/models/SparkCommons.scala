@@ -10,7 +10,8 @@ import play.api.Play.current
  * @author Daniel Voigt Godoy.
  */
 object SparkCommons {
-  val appName = "PlayBenford"
+  val r = scala.util.Random
+  val appName = "PlayBenford" + scala.math.abs(r.nextInt()).toString
   val localMode = true
   val masterIP = "MONSTER"
   val masterPort = 7077
@@ -28,7 +29,7 @@ object SparkCommons {
     }
   }
 
-  //build the SparkConf  object at once
+  //build the SparkConf object at once
   lazy val conf = {
     new SparkConf(false)
       .setMaster(masterURL)

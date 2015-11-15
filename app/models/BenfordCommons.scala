@@ -1,7 +1,7 @@
 package models
 
 import com.dvgodoy.spark.benford.distributions.{Benford, Bootstrap}
-import com.dvgodoy.spark.benford.util.{DataByLevel, ResultsByLevel, StatsCIByLevel}
+import com.dvgodoy.spark.benford.util.{JobId, DataByLevel, ResultsByLevel, StatsCIByLevel}
 import org.apache.spark.rdd.RDD
 import play.api.libs.json._
 
@@ -20,14 +20,14 @@ object BenfordCommons {
 
   def setNumberSamples(numSamples: Int): Unit = numberSamples = numSamples
   def getNumberSamples: Int = numberSamples
-  def loadData(filePath: String): Unit = data = boot.loadData(SparkCommons.sc, filePath)
+  def loadData(filePath: String, jobId: JobId): Unit = data = boot.loadData(SparkCommons.sc, filePath)(jobId)
   def calculate: Unit = { calcSample; calcBenford; calcResults }
-  def getCIsByGroupId(groupId: Int): JsValue = boot.getCIsByGroupId(sampleRDD, groupId)
-  def getCIsByLevel(level: Int): JsValue = boot.getCIsByLevel(sampleRDD, level)
-  def getBenfordCIsByGroupId(groupId: Int): JsValue = boot.getCIsByGroupId(benfordRDD, groupId)
-  def getBenfordCIsByLevel(level: Int): JsValue = boot.getCIsByLevel(benfordRDD, level)
-  def getResultsByGroupId(groupId: Int): JsValue = boot.getResultsByGroupId(resultsRDD, groupId)
-  def getResultsByLevel(level: Int): JsValue = boot.getResultsByLevel(resultsRDD, level)
+  def getCIsByGroupId(groupId: Int, jobId: JobId): JsValue = boot.getCIsByGroupId(sampleRDD, groupId)(jobId)
+  def getCIsByLevel(level: Int, jobId: JobId): JsValue = boot.getCIsByLevel(sampleRDD, level)(jobId)
+  def getBenfordCIsByGroupId(groupId: Int, jobId: JobId): JsValue = boot.getCIsByGroupId(benfordRDD, groupId)(jobId)
+  def getBenfordCIsByLevel(level: Int, jobId: JobId): JsValue = boot.getCIsByLevel(benfordRDD, level)(jobId)
+  def getResultsByGroupId(groupId: Int, jobId: JobId): JsValue = boot.getResultsByGroupId(resultsRDD, groupId)(jobId)
+  def getResultsByLevel(level: Int, jobId: JobId): JsValue = boot.getResultsByLevel(resultsRDD, level)(jobId)
   def getFrequenciesByGroupId(groupId: Int): JsValue = boot.getFrequenciesByGroupId(data, groupId)
   def getFrequenciesByLevel(level: Int): JsValue = boot.getFrequenciesByLevel(data, level)
   def getGroups: JsValue = boot.getGroups(data)
