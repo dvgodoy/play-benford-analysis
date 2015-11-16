@@ -13,6 +13,7 @@ class Application @Inject()(ws: WSClient) extends Controller {
   def root = Action { request =>
     val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
     val juuid = request.session.get("job").getOrElse("0")
+    implicit val session = request.session
     Ok(index(uuid)).withSession(("id", uuid), ("job", juuid))
   }
 

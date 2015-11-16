@@ -1,26 +1,31 @@
+@()(implicit session: play.api.mvc.Session)
 
 <div id="accounting">
+    <div id="jobId" style="display:none"></div>
+    <p>@session.get("job")</p>
     <div class="description">
         <h1>Accounting</h1>
         <p class="lead">Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.</p>
     </div>
 
-    <button type="button" class="btn btn-lg btn-default" id="btnLoad" onclick="accountingLoad('@routes.BenfordBootstrap.load')">Load</button>
+    <button type="button" class="btn btn-lg btn-default" id="btnLoad" onclick="accountingLoad()">Load</button>
     <div id="load">
         <p id="loadStatus"></p>
+        <div id="groups"></div>
+        <div id="frequencies"></div>
     </div>
 
-    <button type="button" class="btn btn-lg btn-default" id="btnCalc" onclick="accountingCalc('@routes.BenfordBootstrap.calculate')">Calculate</button>
+    <button type="button" class="btn btn-lg btn-default" id="btnCalc" onclick="accountingCalc()">Calculate</button>
     <div id="calculate">
         <p id="calcStatus"></p>
     </div>
 
-    <button type="button" class="btn btn-lg btn-default" id="btnResults" onclick="accountingResults('@routes.BenfordBootstrap.getCIsByGroup(0)')">Show Results</button>
+    <button type="button" class="btn btn-lg btn-default" id="btnResults" onclick="accountingResults()">Show Results</button>
     <div id="results">
         <p></p>
     </div>
 
-    <button type="button" class="btn btn-lg btn-default" id="btnProgress" onclick="sparkProgress('@routes.Application.progress')">View Progress</button>
+    <button type="button" class="btn btn-lg btn-default" id="btnProgress" onclick="sparkProgress('/api/progress')">View Progress</button>
     <div id="progress"></div>
 
 </div>

@@ -20,15 +20,15 @@ object BenfordCommons {
 
   def setNumberSamples(numSamples: Int): Unit = numberSamples = numSamples
   def getNumberSamples: Int = numberSamples
-  def loadData(filePath: String, jobId: JobId): Unit = data = boot.loadData(SparkCommons.sc, filePath)(jobId)
-  def calculate: Unit = { calcSample; calcBenford; calcResults }
+  def loadData(filePath: String, jobId: JobId): Unit = { SparkCommons.sc.setJobGroup(jobId.id, jobId.id); data = boot.loadData(SparkCommons.sc, filePath)(jobId) }
+  def calculate(numSamples: Int = 25000): Unit = { setNumberSamples(numSamples); calcSample; calcBenford; calcResults }
   def getCIsByGroupId(groupId: Int, jobId: JobId): JsValue = boot.getCIsByGroupId(sampleRDD, groupId)(jobId)
   def getCIsByLevel(level: Int, jobId: JobId): JsValue = boot.getCIsByLevel(sampleRDD, level)(jobId)
   def getBenfordCIsByGroupId(groupId: Int, jobId: JobId): JsValue = boot.getCIsByGroupId(benfordRDD, groupId)(jobId)
   def getBenfordCIsByLevel(level: Int, jobId: JobId): JsValue = boot.getCIsByLevel(benfordRDD, level)(jobId)
   def getResultsByGroupId(groupId: Int, jobId: JobId): JsValue = boot.getResultsByGroupId(resultsRDD, groupId)(jobId)
   def getResultsByLevel(level: Int, jobId: JobId): JsValue = boot.getResultsByLevel(resultsRDD, level)(jobId)
-  def getFrequenciesByGroupId(groupId: Int): JsValue = boot.getFrequenciesByGroupId(data, groupId)
-  def getFrequenciesByLevel(level: Int): JsValue = boot.getFrequenciesByLevel(data, level)
-  def getGroups: JsValue = boot.getGroups(data)
+  def getFrequenciesByGroupId(groupId: Int, jobId: JobId): JsValue = boot.getFrequenciesByGroupId(data, groupId)
+  def getFrequenciesByLevel(level: Int, jobId: JobId): JsValue = boot.getFrequenciesByLevel(data, level)
+  def getGroups(jobId: JobId): JsValue = boot.getGroups(data)
 }

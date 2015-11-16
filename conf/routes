@@ -6,17 +6,19 @@
 GET        /                            controllers.Application.root
 
 # Async routes - to be called through Ajax only!
-GET        /Aload                        controllers.BenfordBootstrap.load
-GET        /Acalc                        controllers.BenfordBootstrap.calculate
-GET        /ACIsByGroup/:id              controllers.BenfordBootstrap.getCIsByGroup(id: Int)
-GET        /ABenfCIsByGroup/:id          controllers.BenfordBootstrap.getBenfordCIsByGroup(id: Int)
-GET        /ACIsByLevel/:level           controllers.BenfordBootstrap.getCIsByLevel(level: Int)
-GET        /ABenfCIsByLevel/:level       controllers.BenfordBootstrap.getBenfordCIsByLevel(level: Int)
-GET        /AResultsByGroup/:id          controllers.BenfordBootstrap.getResultsByGroup(id: Int)
-GET        /AResultsByLevel/:level       controllers.BenfordBootstrap.getResultsByLevel(level: Int)
-GET        /AFreqByGroup/:id             controllers.BenfordBootstrap.getFreqByGroup(id: Int)
-GET        /AFreqByLevel/:level          controllers.BenfordBootstrap.getFreqByLevel(level: Int)
-GET        /Aprogress                    controllers.Application.progress
+GET        /api/load                             controllers.BenfordBootstrap.load
+GET        /api/:job/calc/:samples               controllers.BenfordBootstrap.calculate(job: String, samples: Int)
+GET        /api/:job/CIsByGroup/:id              controllers.BenfordBootstrap.getCIsByGroup(job: String, id: Int)
+GET        /api/:job/BenfCIsByGroup/:id          controllers.BenfordBootstrap.getBenfordCIsByGroup(job: String, id: Int)
+GET        /api/:job/CIsByLevel/:level           controllers.BenfordBootstrap.getCIsByLevel(job: String, level: Int)
+GET        /api/:job/BenfCIsByLevel/:level       controllers.BenfordBootstrap.getBenfordCIsByLevel(job: String, level: Int)
+GET        /api/:job/ResultsByGroup/:id          controllers.BenfordBootstrap.getResultsByGroup(job: String, id: Int)
+GET        /api/:job/ResultsByLevel/:level       controllers.BenfordBootstrap.getResultsByLevel(job: String, level: Int)
+GET        /api/:job/FreqByGroup/:id             controllers.BenfordBootstrap.getFreqByGroup(job: String, id: Int)
+GET        /api/:job/FreqByLevel/:level          controllers.BenfordBootstrap.getFreqByLevel(job: String, level: Int)
+GET        /api/:job/Groups                      controllers.BenfordBootstrap.getGroups(job: String)
+
+GET        /api/progress                         controllers.Application.progress
 
 # Home page
 
