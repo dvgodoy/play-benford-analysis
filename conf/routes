@@ -3,11 +3,13 @@
 # ~~~~
 
 # Sync routes
-GET        /                            controllers.Application.root
+GET        /                                     controllers.Application.root
 
-# Async routes - to be called through Ajax only!
-GET        /api/load                             controllers.BenfordBootstrap.load
-GET        /api/:job/calc/:samples               controllers.BenfordBootstrap.calculate(job: String, samples: Int)
+GET        /api/Load/$filePath<[\w\W]+>          controllers.BenfordBootstrap.loadData(filePath: String)
+
+# API without Session
+GET        /api/:job/Groups                      controllers.BenfordBootstrap.getGroups(job: String)
+GET        /api/:job/Calc/:samples               controllers.BenfordBootstrap.calculate(job: String, samples: Int)
 GET        /api/:job/CIsByGroup/:id              controllers.BenfordBootstrap.getCIsByGroup(job: String, id: Int)
 GET        /api/:job/BenfCIsByGroup/:id          controllers.BenfordBootstrap.getBenfordCIsByGroup(job: String, id: Int)
 GET        /api/:job/CIsByLevel/:level           controllers.BenfordBootstrap.getCIsByLevel(job: String, level: Int)
@@ -16,9 +18,22 @@ GET        /api/:job/ResultsByGroup/:id          controllers.BenfordBootstrap.ge
 GET        /api/:job/ResultsByLevel/:level       controllers.BenfordBootstrap.getResultsByLevel(job: String, level: Int)
 GET        /api/:job/FreqByGroup/:id             controllers.BenfordBootstrap.getFreqByGroup(job: String, id: Int)
 GET        /api/:job/FreqByLevel/:level          controllers.BenfordBootstrap.getFreqByLevel(job: String, level: Int)
-GET        /api/:job/Groups                      controllers.BenfordBootstrap.getGroups(job: String)
 
-GET        /api/progress                         controllers.Application.progress
+# API with Session
+GET        /api/Groups                           controllers.BenfordBootstrap.getGroupsSession
+GET        /api/Calc/:samples                    controllers.BenfordBootstrap.calculateSession(samples: Int)
+GET        /api/CIsByGroup/:id                   controllers.BenfordBootstrap.getCIsByGroupSession(id: Int)
+GET        /api/BenfCIsByGroup/:id               controllers.BenfordBootstrap.getBenfordCIsByGroupSession(id: Int)
+GET        /api/CIsByLevel/:level                controllers.BenfordBootstrap.getCIsByLevelSession(level: Int)
+GET        /api/BenfCIsByLevel/:level            controllers.BenfordBootstrap.getBenfordCIsByLevelSession(level: Int)
+GET        /api/ResultsByGroup/:id               controllers.BenfordBootstrap.getResultsByGroupSession(id: Int)
+GET        /api/ResultsByLevel/:level            controllers.BenfordBootstrap.getResultsByLevelSession(level: Int)
+GET        /api/FreqByGroup/:id                  controllers.BenfordBootstrap.getFreqByGroupSession(id: Int)
+GET        /api/FreqByLevel/:level               controllers.BenfordBootstrap.getFreqByLevelSession(level: Int)
+
+#
+GET        /api/Progress                         controllers.Application.progressSession
+GET        /api/:job/Progress                    controllers.Application.progress(job: String)
 
 # Home page
 

@@ -11,7 +11,7 @@ import play.api.Play.current
  */
 object SparkCommons {
   val r = scala.util.Random
-  val appName = "PlayBenford" + scala.math.abs(r.nextInt()).toString
+  val appName = "PlayBenford"
   val localMode = true
   val masterIP = "MONSTER"
   val masterPort = 7077

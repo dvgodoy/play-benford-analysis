@@ -12,21 +12,24 @@ class Application @Inject()(ws: WSClient) extends Controller {
 
   def root = Action { request =>
     val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
-    val juuid = request.session.get("job").getOrElse("0")
+    val job = request.session.get("job").getOrElse("0")
     implicit val session = request.session
-    Ok(index(uuid)).withSession(("id", uuid), ("job", juuid))
+    Ok(index(uuid)).withSession(("id", uuid), ("job", job))
   }
 
-  def progress = Action.async { request =>
+  def progressSession = Action.async { request =>
+    val id = request.session.get("job").getOrElse("")
+    progress(id).apply(request)
+  }
+
+  def progress(id: String) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     WS.url(SparkCommons.metricsURL)
       .withHeaders("Accept" -> "application/json")
       .get()
-      .map { response => Ok(response.body)}
+      .map { response => Ok(response.body) }
   }
 
   /*val html = scala.io.Source.fromURL("https://spark.apache.org/").mkString
-  val list = html.split("\n").filter(_ != "")
-  val rdds = sc.parallelize(list)
-  val count = rdds.filter(_.contains("Spark")).count()*/
+  val list = html.split("\n").filter(_ != "")*/
 }

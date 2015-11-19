@@ -1,5 +1,3 @@
-var sampleCIData = "";
-
 var get_json = function(url, funcSuccess, funcError, intervalId) {
     $.ajax({
         url: url,
@@ -21,8 +19,7 @@ var get_json = function(url, funcSuccess, funcError, intervalId) {
 
 var accountingGroups = function(){
     $(function(){
-        var jobId = $("div#jobId").text();
-        get_json("/api/"+jobId+"/Groups",
+        get_json("/api/Groups",
                 function(data){
                     var contentDiv=$("div#groups");
                     contentDiv.html("");
@@ -41,10 +38,30 @@ var accountingGroups = function(){
     });
 }
 
+var histogram = function(svgName, data){
+    $(function(){
+        d3.select('svg#'+svgName)
+            .selectAll('text')
+            .data(data)
+            .enter()
+            .append('rect')
+            .attr('name',function(d, i){return i})
+            .attr('x',function(d, i){return i * 35})
+            .attr('y',function(d){return 300 - d * 300})
+            .attr('width',30)
+            .attr('height',function(d){return d * 300})
+            .on('mouseover',function(){
+                d3.select(this).style('fill','purple');
+            })
+            .on('mouseout',function(){
+              d3.select(this).style('fill','black');
+            });
+    });
+}
+
 var accountingFrequencies = function(id){
     $(function(){
-        var jobId = $("div#jobId").text();
-        get_json("/api/"+jobId+"/FreqByGroup/"+id,
+        get_json("/api/FreqByGroup/"+id,
                 function(data){
                     var contentDiv=$("div#frequencies");
                     contentDiv.html("");
@@ -62,55 +79,33 @@ var accountingFrequencies = function(id){
                     });
                     contentDiv.append("</table>");
                     contentDiv.append("<svg id='d1' width='300px' height='300px'></svg>");
-
-                    d3.select('svg#d1')
-                        .selectAll('text')
-                        .data(data[0].d1)
-                        .enter()
-                        .append('rect')
-                        .attr('name',function(d, i){return i})
-                        .attr('x',function(d, i){return i * 35})
-                        .attr('y',function(d){return 300 - d * 300})
-                        .attr('width',30)
-                        .attr('height',function(d){return d * 300})
-                        .on('mouseover',function(){
-                            d3.select(this).style('fill','purple');
-                        })
-                        .on('mouseout',function(){
-                          d3.select(this).style('fill','black');
-                        });
+                    histogram('d1',data[0].d1)
+                    contentDiv.append("<svg id='d2' width='300px' height='300px'></svg>");
+                    histogram('d2',data[0].d2)
                 },
                 function(){});
     });
 }
 
-var loadStatus = 0;
-var accountingLoad = function(){
-    loadStatus = 0;
-    calcStatus = 0;
+var accountingLoad = function(filePath){
     $(function(){
         $("p#loadStatus").text("Loading...")
-        get_json("/api/load",
-                function(jobId){
-                    $("div#jobId").text(jobId);
-                    loadStatus = 1;
+        get_json("/api/Load/"+filePath,
+                function(){
                     $("p#loadStatus").text("Loaded!");
                     accountingGroups();
                     accountingFrequencies(0);
                 },
-                function(){loadStatus = -1; $("p#loadStatus").text("Error!");});
+                function(){$("p#loadStatus").text("Error!");});
         });
 };
 
-var calcStatus = 0;
-var accountingCalc = function(){
-    calcStatus = 0;
+var accountingCalc = function(numSamples){
     $(function(){
-        var jobId = $("div#jobId").text();
         $("p#calcStatus").text("Calculating...")
-        get_json("/api/"+jobId+"/calc/1000",
-                function(){calcStatus = 1; $("p#calcStatus").text("Calculated!");},
-                function(){calcStatus = -1; $("p#calcStatus").text("Error!");});
+        get_json("/api/Calc/"+numSamples,
+                function(){$("p#calcStatus").text("Calculated!");},
+                function(){$("p#calcStatus").text("Error!");});
     });
 }
 
@@ -123,14 +118,29 @@ var stopInterval = function(id){
     clearInterval(id);
 }
 
-var accountingResults = function(url){
+var accountingResults = function(id){
     $(function(){
         var intervalId = setInterval(function(){$("button#btnProgress").click();},500);
-        var jobId = $("div#jobId").text();
-        get_json("/api/"+jobId+"/CIsByGroup/0",
+        get_json("/api/CIsByGroup/"+id,
                 processCIsByGroup,
                 function(){},
                 intervalId);
+    });
+}
+
+var statRows = function(contentDiv, stat, name) {
+    contentDiv.append("<tr>");
+    contentDiv.append("<td>" + name + "</td>");
+    contentDiv.append("</tr>");
+    $.each(stat,function(idx, item){
+        contentDiv.append("<tr>");
+        contentDiv.append("<td>" + item.alpha + "</td>");
+        contentDiv.append("<td>" + item.li + "</td>");
+        contentDiv.append("<td>" + item.ui + "</td>");
+        contentDiv.append("<td>" + item.lower + "</td>");
+        contentDiv.append("<td>" + item.upper + "</td>");
+        contentDiv.append("<td>" + item.t0 + "</td>");
+        contentDiv.append("</tr>");
     });
 }
 
@@ -145,17 +155,29 @@ var processCIsByGroup = function(data, intervalId){
         contentDiv.append("<li>" + data[0].id + "</li>");
         contentDiv.append("<li>" + data[0].level + "</li>");
         $.each(data[0].CIs,function(key ,val){
-            contentDiv.append("<li>" + key + "</li>");
-            contentDiv.append("<li>" + val.n + "</li>");
-            contentDiv.append("<li>" + val.mean + "</li>");
+            if (key != "r") {
+                contentDiv.append("<li>" + key + "</li>");
+                contentDiv.append("<li>" + val.n + "</li>");
+                statRows(contentDiv, val.mean, "Mean");
+                statRows(contentDiv, val.variance, "Variance");
+                statRows(contentDiv, val.skewness, "Skewness");
+                statRows(contentDiv, val.kurtosis, "Kurtosis");
+            } else if (val.n >= 1000) {
+                contentDiv.append("<li>" + key + "</li>");
+                contentDiv.append("<li>" + val.n + "</li>");
+                statRows(contentDiv, val.alpha0, "Alpha 0");
+                statRows(contentDiv, val.alpha1, "Alpha 1");
+                statRows(contentDiv, val.beta0, "Beta 0");
+                statRows(contentDiv, val.beta1, "Beta 1");
+            }
         });
         contentDiv.append("</ul>");
     });
 };
 
-var sparkProgress = function(url){
+var sparkProgress = function(id){
     $(function(){
-        get_json(url,
+        get_json("/api/Progress",
                 function(data){
                     var contentDiv=$("div#progress");
                     contentDiv.html("");

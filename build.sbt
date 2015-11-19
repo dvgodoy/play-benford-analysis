@@ -22,7 +22,8 @@ libraryDependencies  ++= Seq(
   specs2 % Test,
   "org.scalanlp" %% "breeze" % "0.11.2",
   "org.scalanlp" %% "breeze-natives" % "0.11.2",
-  "org.scalanlp" %% "breeze-viz" % "0.11.2"
+  "org.scalanlp" %% "breeze-viz" % "0.11.2",
+  "com.typesafe.akka" %% "akka-actor" % "2.3.4"
 )
 
 dependencyOverrides ++= Set(

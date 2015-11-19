@@ -1,123 +1,178 @@
 package controllers
 
-import com.dvgodoy.spark.benford.util.JobId
+import java.util.concurrent.TimeUnit._
+
+import akka.pattern.ask
+import akka.util.Timeout
 import models.BenfordCommons
+import models.BenfordService._
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
 
 import scala.concurrent.Future
 
 class BenfordBootstrap extends Controller {
 
-  def load = Action.async { request =>
+  //val filePath = "/media/dvgodoy/FILES/DataScienceRetreat/Portfolio/spark-benford-analysis/src/test/resources/datalevels.csv"
+
+  def loadData(filePath: String) = Action.async {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
-    // generate a new job number when loading new data
-    val juuid = java.util.UUID.randomUUID().toString
-    implicit val jobId = JobId(juuid)
-    val filePath = "/media/dvgodoy/FILES/DataScienceRetreat/Portfolio/spark-benford-analysis/src/test/resources/datalevels.csv"
+    val id = BenfordCommons.createJob
+    val benfordActor = BenfordCommons.getJob(id)
+    implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
-      ok <- Future(BenfordCommons.loadData(filePath, jobId))
-    } yield Ok(juuid).withSession(("id", uuid), ("job", juuid))
+      res <- ask(benfordActor, srvData(filePath)).mapTo[String]
+    } yield Ok(Json.toJson(res)).withSession(("job",id))
     res
   }
 
-  def calculate(juuid: String, numSamples: Int) = Action.async { request =>
+  def getGroupsSession = Action.async { request =>
+    val id = request.session.get("job").getOrElse("")
+    getGroups(id).apply(request)
+  }
+
+  def getGroups(id: String) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
-    val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
-    val jobId = JobId(juuid)
+    val benfordActor = BenfordCommons.getJob(id)
+    implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
-      ok <- Future(BenfordCommons.calculate(numSamples))
-    } yield Ok.withSession(("id", uuid), ("job", juuid))
+      f <- ask(benfordActor, srvGroups()).mapTo[JsValue]
+    } yield Ok(f)
     res
   }
 
-  def getCIsByGroup(juuid: String, id: Int) = Action.async { request =>
+  def calculateSession(numSamples: Int) = Action.async { request =>
+    val id = request.session.get("job").getOrElse("")
+    calculate(id, numSamples).apply(request)
+  }
+
+  def calculate(id: String, numSamples: Int) = Action.async {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
-    val jobId = JobId(juuid)
+    val benfordActor = BenfordCommons.getJob(id)
+    implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
-      ci <- Future(BenfordCommons.getCIsByGroupId(id, jobId))
-    } yield Ok(ci).withSession(("id", uuid), ("job", juuid))
+      res <- ask(benfordActor, srvCalc(numSamples)).mapTo[String]
+    } yield Ok(Json.toJson(res))
     res
   }
 
-  def getBenfordCIsByGroup(juuid: String, id: Int) = Action.async { request =>
+  def getCIsByGroupSession(groupId: Int) = Action.async { request =>
+    val id = request.session.get("job").getOrElse("")
+    getCIsByGroup(id, groupId).apply(request)
+  }
+
+  def getCIsByGroup(id: String, groupId: Int) = Action.async {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
-    val jobId = JobId(juuid)
+    val benfordActor = BenfordCommons.getJob(id)
+    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
-      ci <- Future(BenfordCommons.getBenfordCIsByGroupId(id, jobId))
-    } yield Ok(ci).withSession(("id", uuid), ("job", juuid))
+      ci <- ask(benfordActor, srvCIsByGroupId(groupId)).mapTo[JsValue]
+    } yield Ok(ci)
     res
   }
 
-  def getCIsByLevel(juuid: String, level: Int) = Action.async { request =>
+  def getBenfordCIsByGroupSession(groupId: Int) = Action.async { request =>
+    val id = request.session.get("job").getOrElse("")
+    getBenfordCIsByGroup(id, groupId).apply(request)
+  }
+
+  def getBenfordCIsByGroup(id: String, groupId: Int) = Action.async {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
-    val jobId = JobId(juuid)
+    val benfordActor = BenfordCommons.getJob(id)
+    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
-      ci <- Future(BenfordCommons.getCIsByLevel(level, jobId))
-    } yield Ok(ci).withSession(("id", uuid), ("job", juuid))
+      ci <- ask(benfordActor, srvBenfordCIsByGroupId(groupId)).mapTo[JsValue]
+    } yield Ok(ci)
     res
   }
 
-  def getBenfordCIsByLevel(juuid: String, level: Int) = Action.async { request =>
+  def getCIsByLevelSession(level: Int) = Action.async { request =>
+    val id = request.session.get("job").getOrElse("")
+    getCIsByLevel(id, level).apply(request)
+  }
+
+  def getCIsByLevel(id: String, level: Int) = Action.async {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
-    val jobId = JobId(juuid)
+    val benfordActor = BenfordCommons.getJob(id)
+    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
-      ci <- Future(BenfordCommons.getBenfordCIsByLevel(level, jobId))
-    } yield Ok(ci).withSession(("id", uuid), ("job", juuid))
+      ci <- ask(benfordActor, srvCIsByLevel(level)).mapTo[JsValue]
+    } yield Ok(ci)
     res
   }
 
-  def getResultsByGroup(juuid: String, id: Int) = Action.async { request =>
+  def getBenfordCIsByLevelSession(level: Int) = Action.async { request =>
+    val id = request.session.get("job").getOrElse("")
+    getBenfordCIsByLevel(id, level).apply(request)
+  }
+
+  def getBenfordCIsByLevel(id: String, level: Int) = Action.async {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
-    val jobId = JobId(juuid)
+    val benfordActor = BenfordCommons.getJob(id)
+    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
-      r <- Future(BenfordCommons.getResultsByGroupId(id, jobId))
-    } yield Ok(r).withSession(("id", uuid), ("job", juuid))
+      ci <- ask(benfordActor, srvBenfordCIsByLevel(level)).mapTo[JsValue]
+    } yield Ok(ci)
     res
   }
 
-  def getResultsByLevel(juuid: String, level: Int) = Action.async { request =>
+  def getResultsByGroupSession(groupId: Int) = Action.async { request =>
+    val id = request.session.get("job").getOrElse("")
+    getResultsByGroup(id, groupId).apply(request)
+  }
+
+  def getResultsByGroup(id: String, groupId: Int) = Action.async {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
-    val jobId = JobId(juuid)
+    val benfordActor = BenfordCommons.getJob(id)
+    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
-      r <- Future(BenfordCommons.getResultsByLevel(level, jobId))
-    } yield Ok(r).withSession(("id", uuid), ("job", juuid))
+      r <- ask(benfordActor, srvResultsByGroupId(groupId)).mapTo[JsValue]
+    } yield Ok(r)
     res
   }
 
-  def getFreqByGroup(juuid: String, id: Int) = Action.async { request =>
+  def getResultsByLevelSession(level: Int) = Action.async { request =>
+    val id = request.session.get("job").getOrElse("")
+    getResultsByLevel(id, level).apply(request)
+  }
+
+  def getResultsByLevel(id: String, level: Int) = Action.async {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
-    val jobId = JobId(juuid)
+    val benfordActor = BenfordCommons.getJob(id)
+    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
-      f <- Future(BenfordCommons.getFrequenciesByGroupId(id, jobId))
-    } yield Ok(f).withSession(("id", uuid), ("job", juuid))
+      r <- ask(benfordActor, srvResultsByLevel(level)).mapTo[JsValue]
+    } yield Ok(r)
     res
   }
 
-  def getFreqByLevel(juuid: String, level: Int) = Action.async { request =>
+  def getFreqByGroupSession(groupId: Int) = Action.async { request =>
+    val id = request.session.get("job").getOrElse("")
+    getFreqByGroup(id, groupId).apply(request)
+  }
+
+  def getFreqByGroup(id: String, groupId: Int) = Action.async {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
-    val jobId = JobId(juuid)
+    val benfordActor = BenfordCommons.getJob(id)
+    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
-      f <- Future(BenfordCommons.getFrequenciesByLevel(level, jobId))
-    } yield Ok(f).withSession(("id", uuid), ("job", juuid))
+      f <- ask(benfordActor, srvFrequenciesByGroupId(groupId)).mapTo[JsValue]
+    } yield Ok(f)
     res
   }
 
-  def getGroups(juuid: String) = Action.async { request =>
+  def getFreqByLevelSession(level: Int) = Action.async { request =>
+    val id = request.session.get("job").getOrElse("")
+    getFreqByLevel(id, level).apply(request)
+  }
+
+  def getFreqByLevel(id: String, level: Int) = Action.async {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
-    val jobId = JobId(juuid)
+    val benfordActor = BenfordCommons.getJob(id)
+    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
-      f <- Future(BenfordCommons.getGroups(jobId))
-    } yield Ok(f).withSession(("id", uuid), ("job", juuid))
+      f <- ask(benfordActor, srvFrequenciesByLevel(level)).mapTo[JsValue]
+    } yield Ok(f)
     res
   }
 
