@@ -4,8 +4,11 @@
 
 # Sync routes
 GET        /                                     controllers.Application.root
+POST       /api/Upload                           controllers.BenfordBootstrap.upload
 
-GET        /api/Load/$filePath<[\w\W]+>          controllers.BenfordBootstrap.loadData(filePath: String)
+GET        /api/Load                             controllers.BenfordBootstrap.loadDataSession
+GET        /api/:job/Load                        controllers.BenfordBootstrap.loadDataUploaded(job: String)
+GET        /api/Load/$filePath<[\w\W]+>          controllers.BenfordBootstrap.loadDataLocal(filePath: String)
 
 # API without Session
 GET        /api/:job/Groups                      controllers.BenfordBootstrap.getGroups(job: String)

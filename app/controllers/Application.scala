@@ -32,4 +32,23 @@ class Application @Inject()(ws: WSClient) extends Controller {
 
   /*val html = scala.io.Source.fromURL("https://spark.apache.org/").mkString
   val list = html.split("\n").filter(_ != "")*/
+
+  /* How to return an image = Writable[Array[Byte]]
+  Ok.stream(Enumerator.fromStream(getClass.getClassLoader.getResourceAsStream("ima‌​ge.gif")))
+   */
+
+  /* Serving file from the server to the browser
+  def index = Action {
+    Ok.sendFile(
+      content = new java.io.File("/tmp/fileToServe.pdf"),
+      fileName = _ => "termsOfService.pdf"
+    )
+  }
+  def index = Action {
+    Ok.sendFile(
+      content = new java.io.File("/tmp/fileToServe.pdf"),
+      inline = true
+    )
+  }*/
+
 }

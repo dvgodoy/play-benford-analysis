@@ -4,6 +4,7 @@ import java.util.concurrent.TimeUnit._
 
 import akka.pattern.ask
 import akka.util.Timeout
+import java.io.File
 import models.BenfordCommons
 import models.BenfordService._
 import play.api.libs.json.{JsValue, Json}
@@ -13,11 +14,38 @@ import scala.concurrent.Future
 
 class BenfordBootstrap extends Controller {
 
-  //val filePath = "/media/dvgodoy/FILES/DataScienceRetreat/Portfolio/spark-benford-analysis/src/test/resources/datalevels.csv"
-
-  def loadData(filePath: String) = Action.async {
-    import scala.concurrent.ExecutionContext.Implicits.global
+  def upload = Action(parse.multipartFormData) { request =>
     val id = BenfordCommons.createJob
+    request.body.file("accData").map { accData =>
+      val filePath = BenfordCommons.tmpFolder + "/" + id + ".csv"
+      accData.ref.moveTo(new File(filePath))
+      Ok("").withSession(("job", id), ("filePath", filePath))
+    }.getOrElse {
+      //Redirect(routes.Application.root).flashing(
+      //  "error" -> "Missing file"
+      //)
+      NotFound("")
+    }
+  }
+
+  def loadDataSession = Action.async { request =>
+    val id = request.session.get("job").getOrElse("")
+    val filePath = request.session.get("filePath").getOrElse("")
+    loadData(id, filePath).apply(request)
+  }
+
+  def loadDataUploaded(id: String) = Action.async { request =>
+    val filePath = "file:///tmp/"+id+".csv"
+    loadData(id, filePath).apply(request)
+  }
+
+  def loadDataLocal(filePath: String) = Action.async { request =>
+    val id = BenfordCommons.createJob
+    loadData(id, filePath).apply(request)
+  }
+
+  def loadData(id: String, filePath: String) = Action.async { request =>
+    import scala.concurrent.ExecutionContext.Implicits.global
     val benfordActor = BenfordCommons.getJob(id)
     implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {

@@ -5,7 +5,13 @@
         <p class="lead">Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.</p>
     </div>
 
-    <button type="button" class="btn btn-lg btn-default" id="btnLoad" onclick="accountingLoad('file:///media/dvgodoy/FILES/DataScienceRetreat/Portfolio/spark-benford-analysis/src/test/resources/datalevels.csv')">Load</button>
+    <form id="uploadForm" action="/api/Upload" method="post" enctype="multipart/form-data">
+        <input type="file" name="accData">
+        <p><input type="submit" value="Upload"></p>
+    </form>
+    <progress style="display:none"></progress>
+
+    <button type="button" class="btn btn-lg btn-default" id="btnLoad" onclick="accountingLoad()">Load</button>
     <div id="load">
         <p id="loadStatus"></p>
         <div id="groups"></div>

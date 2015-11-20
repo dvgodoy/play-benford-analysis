@@ -87,10 +87,10 @@ var accountingFrequencies = function(id){
     });
 }
 
-var accountingLoad = function(filePath){
+var accountingLoad = function(){
     $(function(){
         $("p#loadStatus").text("Loading...")
-        get_json("/api/Load/"+filePath,
+        get_json("/api/Load",
                 function(){
                     $("p#loadStatus").text("Loaded!");
                     accountingGroups();
@@ -201,9 +201,51 @@ var showCurrentDiv = function(divName) {
     });
 }
 
+var progressHandlingFunction = function(e){
+    if(e.lengthComputable){
+        $('progress').attr({value:e.loaded,max:e.total});
+    }
+}
+
 $(function(){
     $("a#linkHome").click(function(){showCurrentDiv("description");});
     $("a#linkAccounting").click(function(e){e.preventDefault();showCurrentDiv("accounting");});
     $("a#linkImage").click(function(){showCurrentDiv("image");});
     showCurrentDiv("description");
+});
+
+$(function(){
+    $("form#uploadForm").submit(function(e) {
+        var formData = new FormData($(this)[0]);
+        $.ajax({
+            url: $(this).attr('action'),  //Server script to process data
+            type: 'POST',
+            xhr: function() {  // Custom XMLHttpRequest
+                var myXhr = $.ajaxSettings.xhr();
+                if(myXhr.upload){ // Check if upload property exists
+                    myXhr.upload.addEventListener('progress',progressHandlingFunction, false); // For handling the progress of the upload
+                }
+                return myXhr;
+            },
+            //Ajax events
+            beforeSend:function(jqXHR, settings){
+                $("progress").show();
+            },
+            success: function(data, textStatus, jqXHR){
+            },
+            error: function(jqXHR, textStatus, errorThrown){
+            },
+            complete: function(jqXHR,textStatus){
+            },
+            // Form data
+            data: formData,
+            //Options to tell jQuery not to process data or worry about content-type.
+            cache: false,
+            contentType: false,
+            processData: false
+        }).done(function(data){
+            console.log(data);
+        });
+        e.preventDefault();
+    });
 });
