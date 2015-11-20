@@ -36,6 +36,9 @@ class BenfordActor extends Actor with ActorLogging {
       sampleRDD = BenfordCommons.calcSample(numberSamples, data)
       benfordRDD = BenfordCommons.calcBenford(numberSamples, data)
       resultsRDD = BenfordCommons.calcResults(sampleRDD, benfordRDD)
+      sampleRDD.cache()
+      benfordRDD.cache()
+      resultsRDD.cache()
       sender ! Success("")
     }
     case srvNumSamples() => {

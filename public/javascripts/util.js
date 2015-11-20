@@ -17,22 +17,39 @@ var get_json = function(url, funcSuccess, funcError, intervalId) {
     });
 };
 
+var groupChildren = function(children){
+    var result=""
+    $.each(children,function(i,item){
+        if (item != "-1") {
+            result = result + "<a href='#groupId"+item+"'>"+item+"</a>" + " "
+        }
+    });
+    return result;
+}
+
 var accountingGroups = function(){
     $(function(){
         get_json("/api/Groups",
                 function(data){
                     var contentDiv=$("div#groups");
                     contentDiv.html("");
-                    contentDiv.append("<table class='table'>");
-                    $.each(data,function(key,item){
-                        contentDiv.append("<tr>");
-                        contentDiv.append("<td>" + item.id + "</td>");
-                        contentDiv.append("<td>" + item.level + "</td>");
-                        contentDiv.append("<td>" + item.name + "</td>");
-                        contentDiv.append("<td>" + item.children + "</td>");
-                        contentDiv.append("</tr>");
+                    contentDiv.append($("<table id='groupsTable' class='table'>"));
+                    $("<thead>").append(
+                        $("<tr>").append(
+                            $("<th class='col-lg-1'>").text("Id"),
+                            $("<th class='col-lg-1'>").text("Level"),
+                            $("<th class='col-lg-8'>").text("Name"),
+                            $("<th class='col-lg-2'>").text("Children")
+                        )
+                    ).appendTo("table#groupsTable");
+                    $.each(data,function(i,item){
+                        $("<tr id='groupId"+item.id+"'>").append(
+                            $("<td>").text(item.id),
+                            $("<td>").text(item.level),
+                            $("<td>").text(item.name),
+                            $("<td>").html(groupChildren(item.children))
+                        ).appendTo("table#groupsTable");
                     });
-                    contentDiv.append("</table>");
                 },
                 function(){});
     });
@@ -65,19 +82,15 @@ var accountingFrequencies = function(id){
                 function(data){
                     var contentDiv=$("div#frequencies");
                     contentDiv.html("");
-                    contentDiv.append("<table class='table'>");
                     $.each(data,function(groups,digits){
-                        contentDiv.append("<p>" + groups + "</p>");
-                        contentDiv.append("<tr>");
+                        contentDiv.append($("<table id='"+groups+"freqTable' class='table'>"));
                         $.each(digits,function(digit,freqs){
-                            contentDiv.append("<p>" + digit + "</p>");
-                            contentDiv.append("<tr>");
-                            contentDiv.append("<td>" + freqs + "</td>");
-                            contentDiv.append("</tr>");
+                            $("<tr>").append(
+                                $("<td>").text(digit),
+                                $("<td>").text(freqs)
+                            ).appendTo("table#"+groups+"freqTable");
                         });
-                        contentDiv.append("</tr>");
                     });
-                    contentDiv.append("</table>");
                     contentDiv.append("<svg id='d1' width='300px' height='300px'></svg>");
                     histogram('d1',data[0].d1)
                     contentDiv.append("<svg id='d2' width='300px' height='300px'></svg>");
@@ -92,11 +105,10 @@ var accountingLoad = function(){
         $("p#loadStatus").text("Loading...")
         get_json("/api/Load",
                 function(){
-                    $("p#loadStatus").text("Loaded!");
                     accountingGroups();
                     accountingFrequencies(0);
                 },
-                function(){$("p#loadStatus").text("Error!");});
+                function(){});
         });
 };
 
@@ -128,19 +140,17 @@ var accountingResults = function(id){
     });
 }
 
-var statRows = function(contentDiv, stat, name) {
-    contentDiv.append("<tr>");
-    contentDiv.append("<td>" + name + "</td>");
-    contentDiv.append("</tr>");
-    $.each(stat,function(idx, item){
-        contentDiv.append("<tr>");
-        contentDiv.append("<td>" + item.alpha + "</td>");
-        contentDiv.append("<td>" + item.li + "</td>");
-        contentDiv.append("<td>" + item.ui + "</td>");
-        contentDiv.append("<td>" + item.lower + "</td>");
-        contentDiv.append("<td>" + item.upper + "</td>");
-        contentDiv.append("<td>" + item.t0 + "</td>");
-        contentDiv.append("</tr>");
+var statRows = function(tableName, stat, name) {
+    $.each(stat,function(i,item){
+        $("<tr>").append(
+            $("<td>").text(name),
+            $("<td>").text(item.alpha),
+            $("<td>").text(item.li),
+            $("<td>").text(item.ui),
+            $("<td>").text(item.lower),
+            $("<td>").text(item.upper),
+            $("<td>").text(item.t0)
+        ).appendTo("table#"+tableName);
     });
 }
 
@@ -151,24 +161,63 @@ var processCIsByGroup = function(data, intervalId){
         sampleCIData = data;
         var contentDiv=$("div#results");
         contentDiv.html("");
-        contentDiv.append("<ul>");
-        contentDiv.append("<li>" + data[0].id + "</li>");
-        contentDiv.append("<li>" + data[0].level + "</li>");
         $.each(data[0].CIs,function(key ,val){
             if (key != "r") {
-                contentDiv.append("<li>" + key + "</li>");
-                contentDiv.append("<li>" + val.n + "</li>");
-                statRows(contentDiv, val.mean, "Mean");
-                statRows(contentDiv, val.variance, "Variance");
-                statRows(contentDiv, val.skewness, "Skewness");
-                statRows(contentDiv, val.kurtosis, "Kurtosis");
+                contentDiv.append(
+                    $("<table id='"+data[0].id+"CIsTable' class='table'>").append(
+                        $("<tr>").append(
+                            $("<td>").text("Group ID"),
+                            $("<td>").text(data[0].id),
+                            $("<td>").text("Level"),
+                            $("<td>").text(data[0].level),
+                            $("<td>").text("#"+val.n)
+                        )
+                    )
+                );
+                contentDiv.append($("<table id='"+data[0].id+"_"+key+"CIsTable' class='table'>"));
+                $("<thead>").append(
+                    $("<tr>").append(
+                        $("<th>").text(key),
+                        $("<th>").text("Alpha"),
+                        $("<th>").text("Lower Index"),
+                        $("<th>").text("Upper Index"),
+                        $("<th>").text("Lower Bound"),
+                        $("<th>").text("Upper Bound"),
+                        $("<th>").text("Statistic")
+                    )
+                ).appendTo("table#"+data[0].id+"_"+key+"CIsTable");
+                statRows(data[0].id+"_"+key+"CIsTable", val.mean, "Mean");
+                statRows(data[0].id+"_"+key+"CIsTable", val.variance, "Variance");
+                statRows(data[0].id+"_"+key+"CIsTable", val.skewness, "Skewness");
+                statRows(data[0].id+"_"+key+"CIsTable", val.kurtosis, "Kurtosis");
             } else if (val.n >= 1000) {
-                contentDiv.append("<li>" + key + "</li>");
-                contentDiv.append("<li>" + val.n + "</li>");
-                statRows(contentDiv, val.alpha0, "Alpha 0");
-                statRows(contentDiv, val.alpha1, "Alpha 1");
-                statRows(contentDiv, val.beta0, "Beta 0");
-                statRows(contentDiv, val.beta1, "Beta 1");
+                contentDiv.append(
+                    $("<table id='"+data[0].id+"CIsTable' class='table'>").append(
+                        $("<tr>").append(
+                            $("<td>").text("Group ID"),
+                            $("<td>").text(data[0].id),
+                            $("<td>").text("Level"),
+                            $("<td>").text(data[0].level),
+                            $("<td>").text("#"+val.n)
+                        )
+                    )
+                );
+                contentDiv.append($("<table id='"+data[0].id+"_"+key+"CIsTable' class='table'>"));
+                $("<thead>").append(
+                    $("<tr>").append(
+                        $("<th>").text(key),
+                        $("<th>").text("Alpha"),
+                        $("<th>").text("Lower Index"),
+                        $("<th>").text("Upper Index"),
+                        $("<th>").text("Lower Bound"),
+                        $("<th>").text("Upper Bound"),
+                        $("<th>").text("Statistic")
+                    )
+                ).appendTo("table#"+data[0].id+"_"+key+"CIsTable");
+                statRows(data[0].id+"_"+key+"CIsTable", val.alpha0, "Alpha 0");
+                statRows(data[0].id+"_"+key+"CIsTable", val.alpha1, "Alpha 1");
+                statRows(data[0].id+"_"+key+"CIsTable", val.beta0, "Beta 0");
+                statRows(data[0].id+"_"+key+"CIsTable", val.beta1, "Beta 1");
             }
         });
         contentDiv.append("</ul>");

@@ -37,13 +37,16 @@
         </div>
     </div>
 
-    <button type="button" class="btn btn-lg btn-default" id="btnLoad" onclick="accountingLoad()">Process</button>
-    <div id="load">
-        <p id="loadStatus"></p>
-        <div id="groups" class="container">
+    <div id="load" class="container">
+        <div class="row">
+            <div class="col-lg-6">
+                <button type="button" class="btn btn-primary" id="btnLoad" onclick="accountingLoad()">Process</button>
+                <div id="groups" class="container"></div>
+            </div>
+            <div id="frequencies"></div>
         </div>
-        <div id="frequencies"></div>
     </div>
+
 
     <button type="button" class="btn btn-lg btn-default" id="btnCalc" onclick="accountingCalc(1000)">Calculate</button>
     <div id="calculate">
