@@ -23,7 +23,7 @@ var accountingGroups = function(){
                 function(data){
                     var contentDiv=$("div#groups");
                     contentDiv.html("");
-                    contentDiv.append("<table>");
+                    contentDiv.append("<table class='table'>");
                     $.each(data,function(key,item){
                         contentDiv.append("<tr>");
                         contentDiv.append("<td>" + item.id + "</td>");
@@ -65,7 +65,7 @@ var accountingFrequencies = function(id){
                 function(data){
                     var contentDiv=$("div#frequencies");
                     contentDiv.html("");
-                    contentDiv.append("<table>");
+                    contentDiv.append("<table class='table'>");
                     $.each(data,function(groups,digits){
                         contentDiv.append("<p>" + groups + "</p>");
                         contentDiv.append("<tr>");
@@ -203,7 +203,7 @@ var showCurrentDiv = function(divName) {
 
 var progressHandlingFunction = function(e){
     if(e.lengthComputable){
-        $('progress').attr({value:e.loaded,max:e.total});
+        $("div#loadProgress").css('width', (100*e.loaded/e.total)+'%').attr('aria-valuenow', (100*e.loaded/e.total));
     }
 }
 
@@ -247,5 +247,24 @@ $(function(){
             console.log(data);
         });
         e.preventDefault();
+    });
+});
+
+$(document).on('change', '.btn-file :file', function() {
+  var input = $(this),
+      numFiles = input.get(0).files ? input.get(0).files.length : 1,
+      label = input.val().replace(/\\/g, '/').replace(/.*\//, '');
+  input.trigger('fileselect', [numFiles, label]);
+});
+
+$(document).ready( function() {
+    $('.btn-file :file').on('fileselect', function(event, numFiles, label) {
+        var input = $(this).parents('.input-group').find(':text'),
+            log = numFiles > 1 ? numFiles + ' files selected' : label;
+        if( input.length ) {
+            input.val(log);
+        } else {
+            if( log ) alert(log);
+        }
     });
 });
