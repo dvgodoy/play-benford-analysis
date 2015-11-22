@@ -8,7 +8,7 @@
     <div class="container">
         <div class="row">
             <form id="uploadForm" action="/api/Upload" method="post" enctype="multipart/form-data" role="form">
-                <div class="col-lg-6">
+                <div class="col-lg-9">
                     <div class="input-group">
                     <span class="input-group-btn">
                         <span class="btn btn-primary btn-file">
@@ -21,13 +21,13 @@
                     Select your data file
                 </span>
                 </div>
-                <div class="col-lg-6">
+                <div class="col-lg-3">
                     <button type="submit" class="btn btn-primary btn-default">Submit</button>
                 </div>
             </form>
         </div>
         <div class="row">
-            <div class="col-lg-6">
+            <div class="col-lg-9">
                 <div class="progress">
                     <div id="loadProgress" class="progress-bar" role="progressbar" aria-valuenow="0"
                          aria-valuemin="0" aria-valuemax="100" style="width:0%">
@@ -39,26 +39,16 @@
 
     <div id="load" class="container">
         <div class="row">
-            <div class="col-lg-6">
-                <button type="button" class="btn btn-primary" id="btnLoad" onclick="accountingLoad()">Process</button>
-                <div id="groups" class="container"></div>
+            <div class="col-lg-10">
+                <button type="button" class="btn btn-primary" id="btnLoad" onclick="accountingLoad()">Load Data</button>
+                <div id="groups" class="container col-lg-12"></div>
+                <div id="frequencies" class="container" style="display: none"></div>
             </div>
-            <div id="frequencies"></div>
+            <div class="col-lg-10"></div>
         </div>
     </div>
 
-
-    <button type="button" class="btn btn-lg btn-default" id="btnCalc" onclick="accountingCalc(1000)">Calculate</button>
-    <div id="calculate">
-        <p id="calcStatus"></p>
-    </div>
-
-    <button type="button" class="btn btn-lg btn-default" id="btnResults" onclick="accountingResults(1)">Show Results</button>
     <div id="results">
-        <p></p>
     </div>
-
-    <button type="button" class="btn btn-lg btn-default" id="btnProgress" onclick="sparkProgress('/api/Progress')">View Progress</button>
-    <div id="progress"></div>
 
 </div>

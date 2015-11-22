@@ -11,10 +11,10 @@ import views.html._
 class Application @Inject()(ws: WSClient) extends Controller {
 
   def root = Action { request =>
-    val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
-    val job = request.session.get("job").getOrElse("0")
-    implicit val session = request.session
-    Ok(index(uuid)).withSession(("id", uuid), ("job", job))
+    //val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
+    //val job = request.session.get("job").getOrElse("0")
+    //implicit val session = request.session
+    Ok(index(""))//.withSession(request.session + (("id", uuid), ("job", job)))
   }
 
   def progressSession = Action.async { request =>
