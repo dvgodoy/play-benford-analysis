@@ -38,6 +38,9 @@ GET        /api/FreqByLevel/:level               controllers.BenfordBootstrap.ge
 GET        /api/Progress                         controllers.Application.progressSession
 GET        /api/:job/Progress                    controllers.Application.progress(job: String)
 
+GET        /api/ExactParams                      controllers.BenfordBootstrap.getExactBenfordParams
+GET        /api/ExactProbs                       controllers.BenfordBootstrap.getExactBenfordProbs
+
 # Home page
 
 # Map static resources from the /public folder to the /assets URL path

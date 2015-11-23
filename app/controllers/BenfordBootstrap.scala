@@ -50,7 +50,7 @@ class BenfordBootstrap extends Controller {
     implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
       res <- ask(benfordActor, srvData(filePath)).mapTo[String]
-    } yield Ok(Json.toJson(res)).withSession(("job",id))
+    } yield Ok(Json.toJson(res))
     res
   }
 
@@ -201,6 +201,22 @@ class BenfordBootstrap extends Controller {
     val res: Future[Result] = for {
       f <- ask(benfordActor, srvFrequenciesByLevel(level)).mapTo[JsValue]
     } yield Ok(f)
+    res
+  }
+
+  def getExactBenfordParams = Action.async {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val res: Future[Result] = for {
+      p <- Future(BenfordCommons.getExactBenfordParams)
+    } yield Ok(p)
+    res
+  }
+
+  def getExactBenfordProbs = Action.async {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val res: Future[Result] = for {
+      p <- Future(BenfordCommons.getExactBenfordProbs)
+    } yield Ok(p)
     res
   }
 

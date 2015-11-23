@@ -65,12 +65,15 @@ var accountingCIs = function(id){
         get_json("/api/CIsByGroup/"+id,
                 function(data){
                     preProcessCIsByGroup(data);
+                    $("tr#groupId"+id+"_CIs").show();
+                    showResult(id,"d1d2");
                 },
                 function(){});
         get_json("/api/BenfCIsByGroup/"+id,
                 function(data){
                     preProcessBenfCIsByGroup(data);
                     $("tr#groupId"+id+"_CIs").show();
+                    showResult(id,"d1d2");
                 },
                 function(){});
     });
@@ -81,6 +84,17 @@ var accountingResults = function(id){
         get_json("/api/ResultsByGroup/"+id,
                 function(data){
                     processResultsByGroup(data);
+                    showResult(id,"d1d2");
+                },
+                function(){});
+    });
+}
+
+var accountingExactParams = function(){
+    $(function(){
+        get_json("/api/ExactParams",
+                function(data){
+                    processExact(data);
                     showResult(id,"d1d2");
                 },
                 function(){});
@@ -99,8 +113,14 @@ var groupButtons = function(id){
             }
          }),
          $("<button type='button' class='btn btn-default col-lg-6'>").text("Results").click(function(){
-            accountingCIs(id); accountingResults(id);})
-         }
+            if ($("div#results"+id).html() == "") {
+                accountingExactParams();
+                accountingCIs(id);
+                accountingResults(id);
+            } else {
+                $("tr#groupId"+id+"_CIs").toggle();
+            }
+         })
     );
     return buttonsDiv;
 }
@@ -137,29 +157,40 @@ var buttonChildren = function(children){
 /// SHOW/HIDE
 
 var showFreq = function(id, digits){
-    $("div#freq"+id+"_d1d2").hide();
-    $("div#freq"+id+"_d1").hide();
-    $("div#freq"+id+"_d2").hide();
-    $("div#freq"+id+"_"+digits).show();
+    $(function(){
+        $("div#freq"+id+"_d1d2").hide();
+        $("div#freq"+id+"_d1").hide();
+        $("div#freq"+id+"_d2").hide();
+        $("div#freq"+id+"_"+digits).show();
+    });
 }
 
 var showResult = function(id, digits){
-    $("table#"+id+"_d1d2_ResultsTable").hide();
-    $("table#"+id+"_d1d2_CIsTable").hide();
-    $("table#"+id+"_d1d2_CIsTable_benford").hide();
-    $("table#"+id+"_d1_ResultsTable").hide();
-    $("table#"+id+"_d1_CIsTable").hide();
-    $("table#"+id+"_d1_CIsTable_benford").hide();
-    $("table#"+id+"_d2_ResultsTable").hide();
-    $("table#"+id+"_d2_CIsTable").hide();
-    $("table#"+id+"_d2_CIsTable_benford").hide();
-    $("table#"+id+"_reg_ResultsTable").hide();
-    $("table#"+id+"_r_CIsTable").hide();
-    $("table#"+id+"_r_CIsTable_benford").hide();
-    $("table#"+id+"_"+digits+"_ResultsTable").show();
-    var name = (digits == 'reg') ? 'r' : digits;
-    $("table#"+id+"_"+name+"_CIsTable").show();
-    $("table#"+id+"_"+name+"_CIsTable_benford").show();
+    $(function(){
+        $("table#"+id+"_d1d2_ResultsTable").hide();
+        $("table#"+id+"_d1d2_CIsTable").hide();
+        $("table#"+id+"_d1d2_CIsTable_benford").hide();
+        $("table#"+id+"_d1_ResultsTable").hide();
+        $("table#"+id+"_d1_CIsTable").hide();
+        $("table#"+id+"_d1_CIsTable_benford").hide();
+        $("table#"+id+"_d2_ResultsTable").hide();
+        $("table#"+id+"_d2_CIsTable").hide();
+        $("table#"+id+"_d2_CIsTable_benford").hide();
+        $("table#"+id+"_reg_ResultsTable").hide();
+        $("table#"+id+"_r_CIsTable").hide();
+        $("table#"+id+"_r_CIsTable_benford").hide();
+
+        $("div#exactParam"+id+" > table#exactParam_d1d2").hide();
+        $("div#exactParam"+id+" > table#exactParam_d1").hide();
+        $("div#exactParam"+id+" > table#exactParam_d2").hide();
+        $("div#exactParam"+id+" > table#exactParam_r").hide();
+
+        $("table#"+id+"_"+digits+"_ResultsTable").show();
+        var name = (digits == 'reg') ? 'r' : digits;
+        $("table#"+id+"_"+name+"_CIsTable").show();
+        $("table#"+id+"_"+name+"_CIsTable_benford").show();
+        $("div#exactParam"+id+" > table#exactParam_"+name).show();
+    });
 }
 
 var showCurrentDiv = function(divName) {
@@ -227,6 +258,7 @@ var addGroups = function(data){
                         $("<div class='col-lg-12'>").append(
                             $("<div id='CIs"+item.id+"' class='container col-lg-5'>").html(""),
                             $("<div id='CIs"+item.id+"_benford' class='container col-lg-2'>").html(""),
+                            $("<div id='exactParam"+item.id+"' class='exactParams container col-lg-2'>").html(""),
                             $("<div id='results"+item.id+"' class='container col-lg-3'>").html("")
                         )
                     )
@@ -313,7 +345,7 @@ var histogram = function(id, data, svgWidth, svgHeight){
 /// DIAGNOSTICS
 
 var diagnosticsTable = function(data){
-    var diagTable = $("<table id='"+data[0].id+"_diagTable' class='table'>");
+    var diagTable = $("<table id='"+data[0].id+"_diagTable' class='table' style='display:none'>");
     $("<tr>").append(
         $("<td>").text("Stats Criteria Diagnostic: "),
         $("<td align='center'>").html("<span class='glyphicon "+((data[0].results.statsDiag==1)?"glyphicon-ok":"glyphicon-remove")+"'></span>")
@@ -337,8 +369,11 @@ var resultsRows = function(resTable, stat, name) {
 
 var resultsTable = function(id, n, digits, results){
     var tableName = id+"_"+digits+"_ResultsTable";
-    var resTable = $("<table id='"+tableName+"' class='table'>");
+    var resTable = $("<table id='"+tableName+"' class='table' style='display:none'>");
     $("<thead>").append(
+        $("<tr>").append(
+            $("<th colspan='2'>").text("Result")
+        ),
         $("<tr>").append(
             //$("<th>").text(digits),
             $("<th>").text("Ovelaps"),
@@ -380,11 +415,11 @@ var processResultsByGroup = function(data){
 /// CONFIDENCE INTERVALS
 
 var preProcessCIsByGroup = function(data){
-    processCIsByGroup(data, "", "Sample");
+    processCIsByGroup(data, "");
 }
 
 var preProcessBenfCIsByGroup = function(data){
-    processCIsByGroup(data, "_benford", "Benford");
+    processCIsByGroup(data, "_benford");
 }
 
 var CIsRows = function(cisTable, stat, name, alpha, short) {
@@ -398,9 +433,7 @@ var CIsRows = function(cisTable, stat, name, alpha, short) {
             } else {
                 $("<tr>").append(
                     $("<td>").text(name),
-                    $("<td align='right'>").text(item.alpha.toFixed(4)),
-                    /*$("<td align='right'>").text(item.li.toFixed(4)),
-                    $("<td align='right'>").text(item.ui.toFixed(4)),*/
+                    $("<td align='right'>").text((item.alpha*100).toFixed(1)+"%"),
                     $("<td align='right'>").text(item.lower.toFixed(4)),
                     $("<td align='right'>").text(item.upper.toFixed(4)),
                     $("<td align='right'>").text(item.t0.toFixed(4))
@@ -413,9 +446,12 @@ var CIsRows = function(cisTable, stat, name, alpha, short) {
 var CIsTable = function(id, digits, results, benford){
     var short = (benford != "");
     var tableName = id+"_"+digits+"_CIsTable"+benford;
-    var cisTable = $("<table id='"+tableName+"' class='table'>");
+    var cisTable = $("<table id='"+tableName+"' class='table' style='display:none'>");
     if (short) {
         $("<thead>").append(
+            $("<tr>").append(
+                $("<th colspan='2' align='center'>").text("Benford Sample")
+            ),
             $("<tr>").append(
                 $("<th>").text("Lower"),
                 $("<th>").text("Upper")
@@ -423,6 +459,11 @@ var CIsTable = function(id, digits, results, benford){
         ).appendTo(cisTable);
     } else {
         $("<thead>").append(
+            $("<tr>").append(
+                $("<th>"),
+                $("<th>"),
+                $("<th colspan='3' align='center'>").text("Bootstrap Sample")
+            ),
             $("<tr>").append(
                 $("<th>").text(digits),
                 $("<th>").text("Alpha"),
@@ -437,17 +478,19 @@ var CIsTable = function(id, digits, results, benford){
         CIsRows(cisTable, results.variance, "Variance", 0.99, short);
         CIsRows(cisTable, results.skewness, "Skewness", 0.99, short);
         CIsRows(cisTable, results.kurtosis, "Kurtosis", 0.99, short);
-    } else if (results.n >= 1000) {
+    } else {
         CIsRows(cisTable, results.pearson, "Pearson", 0.99, short);
-        CIsRows(cisTable, results.alpha0, "Alpha 0", 0.975, short);
-        CIsRows(cisTable, results.alpha1, "Alpha 1", 0.975, short);
-        CIsRows(cisTable, results.beta0, "Beta 0", 0.975, short);
-        CIsRows(cisTable, results.beta1, "Beta 1", 0.975, short);
+        if (results.n >= 1000) {
+            CIsRows(cisTable, results.alpha0, "Alpha 0", 0.975, short);
+            CIsRows(cisTable, results.alpha1, "Alpha 1", 0.975, short);
+            CIsRows(cisTable, results.beta0, "Beta 0", 0.975, short);
+            CIsRows(cisTable, results.beta1, "Beta 1", 0.975, short);
+        }
     };
     return cisTable;
 }
 
-var processCIsByGroup = function(data, benford, title){
+var processCIsByGroup = function(data, benford){
     $(function(){
         var short = (benford != "");
         var contentDiv=$("div#CIs"+data[0].id+benford);
@@ -458,13 +501,56 @@ var processCIsByGroup = function(data, benford, title){
     });
 };
 
+/// EXACT
+
+var exactRows = function(exactTable, stat){
+    $("<tr>").append(
+        $("<td align='right'>").text(stat[0].toFixed(4))
+    ).appendTo(exactTable);
+}
+
+var exactParmTable = function(digits, results){
+    var exactTable = $("<table id='exactParam_"+digits+"' class='table' style='display:none'>");
+    $("<thead>").append(
+        $("<tr>").append(
+            $("<th align='center'>").text("Benford")
+        ),
+        $("<tr>").append(
+            $("<th>").text("Exact")
+        )
+    ).appendTo(exactTable);
+    if (digits != "r") {
+        exactRows(exactTable, results.mean);
+        exactRows(exactTable, results.variance);
+        exactRows(exactTable, results.skewness);
+        exactRows(exactTable, results.kurtosis);
+    } else {
+        exactRows(exactTable, results.pearson);
+        exactRows(exactTable, results.alpha0);
+        exactRows(exactTable, results.alpha1);
+        exactRows(exactTable, results.beta0);
+        exactRows(exactTable, results.beta1);
+    };
+    return exactTable;
+}
+
+var processExact = function(data){
+    $(function(){
+        var contentDiv=$(".exactParams");
+        contentDiv.html("");
+        $.each(data,function(key ,val){
+            contentDiv.append(exactParmTable(key, val));
+        });
+    });
+};
+
+/// GENERAL FUNCTIONS
+
 var progressHandlingFunction = function(e){
     if(e.lengthComputable){
         $("div#loadProgress").css('width', (100*e.loaded/e.total)+'%').attr('aria-valuenow', (100*e.loaded/e.total));
     }
 }
-
-/// GENERAL FUNCTIONS
 
 $(function(){
     $("a#linkHome").click(function(){showCurrentDiv("description");});
@@ -506,7 +592,7 @@ $(function(){
             contentType: false,
             processData: false
         }).done(function(data){
-            console.log(data);
+            $("div#load").show();
         });
         e.preventDefault();
    });

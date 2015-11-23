@@ -24,7 +24,6 @@ class BenfordActor extends Actor with ActorLogging {
   private var benfordRDD: RDD[StatsCIByLevel] = _
   private var resultsRDD: RDD[ResultsByLevel] = _
   private var numberSamples: Int = 25000
-  private var exact = BenfordStatsDigits
 
   implicit val jobId = JobId(self.path.name)
 

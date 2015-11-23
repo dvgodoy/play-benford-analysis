@@ -11,6 +11,8 @@ object BenfordCommons {
   val tmpFolder = "/tmp"
   private val boot = Bootstrap()
   private val benf = Benford()
+  private val exactParams = boot.getExactBenfordParams()
+  private val exactProbs = boot.getExactBenfordProbs()
 
   val system = ActorSystem("Benford")
 
@@ -43,4 +45,6 @@ object BenfordCommons {
   def getFrequenciesByGroupId(data: DataByLevel, groupId: Int)(implicit jobId: JobId): JsValue = boot.getFrequenciesByGroupId(data, groupId)
   def getFrequenciesByLevel(data: DataByLevel, level: Int)(implicit jobId: JobId): JsValue = boot.getFrequenciesByLevel(data, level)
   def getGroups(data: DataByLevel)(implicit jobId: JobId): JsValue = boot.getGroups(data)
+  def getExactBenfordParams: JsValue = exactParams
+  def getExactBenfordProbs: JsValue = exactProbs
 }
