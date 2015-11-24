@@ -220,4 +220,34 @@ class BenfordBootstrap extends Controller {
     res
   }
 
+  def getTestsByGroupSession(groupId: Int) = Action.async { request =>
+    val id = request.session.get("job").getOrElse("")
+    getTestsByGroup(id, groupId).apply(request)
+  }
+
+  def getTestsByGroup(id: String, groupId: Int) = Action.async {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val benfordActor = BenfordCommons.getJob(id)
+    implicit val timeout = Timeout(15, MINUTES)
+    val res: Future[Result] = for {
+      f <- ask(benfordActor, srvTestsByGroupId(groupId)).mapTo[JsValue]
+    } yield Ok(f)
+    res
+  }
+
+  def getTestsByLevelSession(level: Int) = Action.async { request =>
+    val id = request.session.get("job").getOrElse("")
+    getTestsByLevel(id, level).apply(request)
+  }
+
+  def getTestsByLevel(id: String, level: Int) = Action.async {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val benfordActor = BenfordCommons.getJob(id)
+    implicit val timeout = Timeout(15, MINUTES)
+    val res: Future[Result] = for {
+      f <- ask(benfordActor, srvTestsByLevel(level)).mapTo[JsValue]
+    } yield Ok(f)
+    res
+  }
+
 }

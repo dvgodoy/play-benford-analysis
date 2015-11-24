@@ -72,6 +72,12 @@ class BenfordActor extends Actor with ActorLogging {
     case srvGroups() => {
       Future(BenfordCommons.getGroups(data)) pipeTo sender
     }
+    case srvTestsByGroupId(groupId: Int) => {
+      Future(BenfordCommons.getTestsByGroupId(data, groupId)) pipeTo sender
+    }
+    case srvTestsByLevel(level: Int) => {
+      Future(BenfordCommons.getTestsByLevel(data, level)) pipeTo sender
+    }
   }
 
 }

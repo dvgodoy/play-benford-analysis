@@ -32,7 +32,16 @@ var accountingFrequencies = function(id){
         get_json("/api/FreqByGroup/"+id,
                 function(data){
                     addFrequencies(id, data);
-                    $("tr#groupId"+id+"_freqs").show();
+                },
+                function(){});
+    });
+}
+
+var accountingTests = function(id){
+    $(function(){
+        get_json("/api/TestsByGroup/"+id,
+                function(data){
+                    addTests(id, data);
                 },
                 function(){});
     });
@@ -65,14 +74,12 @@ var accountingCIs = function(id){
         get_json("/api/CIsByGroup/"+id,
                 function(data){
                     preProcessCIsByGroup(data);
-                    $("tr#groupId"+id+"_CIs").show();
                     showResult(id,"d1d2");
                 },
                 function(){});
         get_json("/api/BenfCIsByGroup/"+id,
                 function(data){
                     preProcessBenfCIsByGroup(data);
-                    $("tr#groupId"+id+"_CIs").show();
                     showResult(id,"d1d2");
                 },
                 function(){});
@@ -108,13 +115,18 @@ var groupButtons = function(id){
          $("<button type='button' class='btn btn-default col-lg-6'>").text("Freqs").click(function(){
             if ($("div#freq"+id+"_d1d2").html() == "") {
                 accountingFrequencies(id);
+                accountingTests(id);
+                $("tr#groupId"+id+"_freqs").show();
             } else {
                 $("tr#groupId"+id+"_freqs").toggle();
             }
          }),
          $("<button type='button' class='btn btn-default col-lg-6'>").text("Results").click(function(){
             if ($("div#results"+id).html() == "") {
-                accountingExactParams();
+                if ($("div#freq"+id+"_d1d2").html() == "") {
+                    accountingFrequencies(id);
+                    accountingTests(id);
+                };
                 accountingCIs(id);
                 accountingResults(id);
             } else {
@@ -180,16 +192,26 @@ var showResult = function(id, digits){
         $("table#"+id+"_r_CIsTable").hide();
         $("table#"+id+"_r_CIsTable_benford").hide();
 
-        $("div#exactParam"+id+" > table#exactParam_d1d2").hide();
-        $("div#exactParam"+id+" > table#exactParam_d1").hide();
-        $("div#exactParam"+id+" > table#exactParam_d2").hide();
-        $("div#exactParam"+id+" > table#exactParam_r").hide();
+        $("div#exactParam"+id).find("table#exactParam_d1d2").hide();
+        $("div#exactParam"+id).find("table#exactParam_d1").hide();
+        $("div#exactParam"+id).find("table#exactParam_d2").hide();
+        $("div#exactParam"+id).find("table#exactParam_r").hide();
+        var regRows = $("table#"+id+"_r_CIsTable tr").length;
 
+        $("table#"+id+"_diagTable").show();
         $("table#"+id+"_"+digits+"_ResultsTable").show();
         var name = (digits == 'reg') ? 'r' : digits;
         $("table#"+id+"_"+name+"_CIsTable").show();
         $("table#"+id+"_"+name+"_CIsTable_benford").show();
         $("div#exactParam"+id+" > table#exactParam_"+name).show();
+        if (regRows == 3) {
+            var rTable = $("div#exactParam"+id+" > table#exactParam_"+name);
+            rTable.find("tr#alpha0").hide();
+            rTable.find("tr#alpha1").hide();
+            rTable.find("tr#beta0").hide();
+            rTable.find("tr#beta1").hide();
+        }
+        $("tr#groupId"+id+"_CIs").show();
     });
 }
 
@@ -265,17 +287,55 @@ var addGroups = function(data){
                 )
             ).appendTo("table#groupsTable");
         });
+        accountingExactParams();
     });
 }
 
 /// FREQUENCIES BUILDING
+
+var addTests = function(id, data){
+    $(function(){
+        $.each(data.z[0],function(key, val){
+            if (key != "count") {
+                var digits = key.toLocaleLowerCase().slice(4);
+                var contentDiv=$("div#freq"+id+"_"+digits);
+                var testTable = $("<table id=test'"+id+"_"+digits+"' class='table'>");
+                contentDiv.append(
+                    $("<tr>").append(
+                        $("<td>").text("Z Test - Digits Rejected: "),
+                        $("<td>").text((val.rejected.length > 0) ? val.rejected : "None")
+                    ).appendTo(testTable)
+                );
+                $.each(val.rejected, function(idx, name){
+                    d3.select("svg#f"+id+"_"+digits)
+                        .select("rect#f"+name)
+                        .attr("color","red")
+                        .style("fill","red");
+                });
+            };
+        });
+        $.each(data.chisquared[0],function(key,val){
+            if (key != "count") {
+                var digits = key.toLocaleLowerCase().slice(4);
+                var contentDiv=$("div#freq"+id+"_"+digits);
+                var testTable = $("<table id=test'"+id+"_"+digits+"' class='table'>");
+                contentDiv.append(
+                    $("<tr>").append(
+                        $("<td>").text("Chi-Squared Test - Overall Distribution: "),
+                        $("<td>").text((val.rejected.length > 0) ? "Rejected" : "Accepted")
+                    ).appendTo(testTable)
+                );
+            };
+        });
+    });
+}
 
 var addFrequencies = function(id, data){
     $(function(){
         var contentDiv=$("div#freq"+id+"_d1d2");
         contentDiv.show();
         contentDiv.html("");
-        contentDiv.append(histogram("f"+id+"_d1d2", data[0].d1d2, 600, 300));
+        contentDiv.append(histogram("f"+id+"_d1d2", data[0].d1d2, 900, 300));
         var contentDiv=$("div#freq"+id+"_d1");
         contentDiv.hide();
         contentDiv.html("");
@@ -290,62 +350,64 @@ var addFrequencies = function(id, data){
 var histogram = function(id, data, svgWidth, svgHeight){
     var svgHist = $("<svg id='"+id+"' width='"+svgWidth+"px' height='"+svgHeight+"px'>");
     var numberBars = data.length;
+    var init = (numberBars == 90) ? 10 : ((numberBars == 10) ? 0 : 1)
     if (numberBars == 10){
         var prob = Array.apply(null, {length: 10}).map(Function.call, function(x){
           var total = 0;
-          for (init=1;init<10;init++) {
-            total = total + (Math.log(1 + 1/(x + 10*init))*Math.LOG10E)
+          for (i=1;i<10;i++) {
+            total = total + (Math.log(1 + 1/(x + 10*i))*Math.LOG10E)
           };
           return total;
          });
     } else {
-        var init = (numberBars == 90) ? 10 : ((numberBars == 10) ? 0 : 1)
         var prob = Array.apply(null, {length: numberBars}).map(Function.call, function(x){return (Math.log(1 + 1/(x + init))*Math.LOG10E)});
     };
-    var adjust = 0.9/Math.max(Math.max(...data),prob[0]);
+    var adjust = 0.8/Math.max(Math.max(...data),prob[0]);
     var barWidth = (svgWidth - 2) / numberBars - 1;
     d3.select(svgHist.get(0))
         .selectAll('rect')
         .data(data)
         .enter()
         .append('rect')
-        .attr('name',function(d, i){return i})
-        .attr('x',function(d, i){return i * (barWidth + 1) + 2})
-        .attr('y',function(d){return svgHeight - d * svgHeight * adjust})
+        .attr('id',function(d, i){return "f" + parseInt(i + init);})
+        .attr('x',function(d, i){return i * (barWidth + 1) + 2;})
+        .attr('y',function(d){return svgHeight - d * svgHeight * adjust - 30;})
         .attr('width',barWidth)
-        .attr('height',function(d){return d * svgHeight * adjust})
-        .on('mouseover',function(){
+        .attr('height',function(d){return d * svgHeight * adjust;})
+        /*.on('mouseover',function(){
             d3.select(this).style('fill','orange');
         })
         .on('mouseout',function(){
             d3.select(this).style('fill','black');
-        });
+        });*/
     d3.select(svgHist.get(0))
         .selectAll('circle')
         .data(prob)
         .enter()
         .append('circle')
-        .attr('cx', function(d, i){return i * (barWidth + 1) + 2 + barWidth / 2})
-        .attr('cy', function(d){return svgHeight - d * svgHeight * adjust})
+        .attr('cx', function(d, i){return i * (barWidth + 1) + 2 + barWidth / 2;})
+        .attr('cy', function(d){return svgHeight - d * svgHeight * adjust - 30;})
         .attr('r',barWidth / 4)
         .style('fill','red');
+    var seq = Array.apply(0,Array((numberBars == 90) ? 9 : numberBars)).map(function(x,i){ return i * ((numberBars == 90) ? 10 : 1) + init; });
+    d3.select(svgHist.get(0))
+        .selectAll('text')
+        .data(seq)
+        .enter()
+        .append('text')
+        .attr('x', function(d){return (d - seq[0]) * (barWidth + 1) + ((numberBars == 90) ? 0 : (2 + barWidth / 2));})
+        .attr('y', svgHeight - 10)
+        .text(function(d){return d;});
     return svgHist;
 }
-
-/*$.each(data,function(groups,digits){
-    contentDiv.append($("<table id='"+groups+"freqTable' class='table'>"));
-    $.each(digits,function(digit,freqs){
-        $("<tr>").append(
-            $("<td>").text(digit),
-            $("<td>").text(freqs)
-        ).appendTo("table#"+groups+"freqTable");
-    });
-});*/
 
 /// DIAGNOSTICS
 
 var diagnosticsTable = function(data){
     var diagTable = $("<table id='"+data[0].id+"_diagTable' class='table' style='display:none'>");
+    $("<tr>").append(
+        $("<th colspan='2'>").text("Bootstrap Results")
+    ).appendTo(diagTable);
     $("<tr>").append(
         $("<td>").text("Stats Criteria Diagnostic: "),
         $("<td align='center'>").html("<span class='glyphicon "+((data[0].results.statsDiag==1)?"glyphicon-ok":"glyphicon-remove")+"'></span>")
@@ -402,6 +464,26 @@ var processResultsByGroup = function(data){
         var diagDiv=$("div#diag"+data[0].id);
         diagDiv.html("");
         diagDiv.append(diagnosticsTable(data));
+
+        if (data[0].results.statsDiag==1 && (data[0].results.n < 1000 || data[0].results.regsDiag!=-1)) {
+            d3.select("svg#f"+data[0].id+"_d1d2").selectAll("[color=red]").style("fill","green");
+            d3.select("svg#f"+data[0].id+"_d1").selectAll("[color=red]").style("fill","green");
+            d3.select("svg#f"+data[0].id+"_d2").selectAll("[color=red]").style("fill","green");
+        }
+
+        if (data[0].results.n < 1000) {
+            groupColor = (data[0].results.statsDiag==1) ? "rgb(96,192,0)" : "rgb(255,32,0)"
+        } else {
+            if (data[0].results.regsDiag==1) {
+                groupColor = (data[0].results.statsDiag==1) ? "rgb(96,192,0)" : "rgb(255,128,0)"
+            } else if (data[0].results.regsDiag==-1) {
+                groupColor = (data[0].results.statsDiag==1) ? "rgb(255,128,0)" : "rgb(255,32,0)"
+            } else {
+                groupColor = "rgb(96,192,96)"
+            }
+        }
+        $("tr#groupId"+data[0].id+" > td").css("background-color",groupColor);
+
         var contentDiv=$("div#results"+data[0].id);
         contentDiv.html("");
         $.each(data[0].results,function(key, val){
@@ -503,8 +585,8 @@ var processCIsByGroup = function(data, benford){
 
 /// EXACT
 
-var exactRows = function(exactTable, stat){
-    $("<tr>").append(
+var exactRows = function(exactTable, stat, name){
+    $("<tr id='"+name+"'>").append(
         $("<td align='right'>").text(stat[0].toFixed(4))
     ).appendTo(exactTable);
 }
@@ -520,16 +602,16 @@ var exactParmTable = function(digits, results){
         )
     ).appendTo(exactTable);
     if (digits != "r") {
-        exactRows(exactTable, results.mean);
-        exactRows(exactTable, results.variance);
-        exactRows(exactTable, results.skewness);
-        exactRows(exactTable, results.kurtosis);
+        exactRows(exactTable, results.mean, "mean");
+        exactRows(exactTable, results.variance, "variance");
+        exactRows(exactTable, results.skewness, "skewness");
+        exactRows(exactTable, results.kurtosis, "kurtosis");
     } else {
-        exactRows(exactTable, results.pearson);
-        exactRows(exactTable, results.alpha0);
-        exactRows(exactTable, results.alpha1);
-        exactRows(exactTable, results.beta0);
-        exactRows(exactTable, results.beta1);
+        exactRows(exactTable, results.pearson, "pearson");
+        exactRows(exactTable, results.alpha0, "alpha0");
+        exactRows(exactTable, results.alpha1, "alpha1");
+        exactRows(exactTable, results.beta0, "beta0");
+        exactRows(exactTable, results.beta1, "beta1");
     };
     return exactTable;
 }

@@ -14,5 +14,7 @@ object BenfordService {
   case class srvFrequenciesByLevel(level: Int)
   case class srvGroups()
   case class srvNumSamples()
+  case class srvTestsByGroupId(groupId: Int)
+  case class srvTestsByLevel(level: Int)
 
 }

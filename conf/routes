@@ -21,6 +21,8 @@ GET        /api/:job/ResultsByGroup/:id          controllers.BenfordBootstrap.ge
 GET        /api/:job/ResultsByLevel/:level       controllers.BenfordBootstrap.getResultsByLevel(job: String, level: Int)
 GET        /api/:job/FreqByGroup/:id             controllers.BenfordBootstrap.getFreqByGroup(job: String, id: Int)
 GET        /api/:job/FreqByLevel/:level          controllers.BenfordBootstrap.getFreqByLevel(job: String, level: Int)
+GET        /api/:job/TestsByGroup/:id            controllers.BenfordBootstrap.getTestsByGroup(job: String, id: Int)
+GET        /api/:job/TestsByLevel/:level         controllers.BenfordBootstrap.getTestsByLevel(job: String, level: Int)
 
 # API with Session
 GET        /api/Groups                           controllers.BenfordBootstrap.getGroupsSession
@@ -33,6 +35,8 @@ GET        /api/ResultsByGroup/:id               controllers.BenfordBootstrap.ge
 GET        /api/ResultsByLevel/:level            controllers.BenfordBootstrap.getResultsByLevelSession(level: Int)
 GET        /api/FreqByGroup/:id                  controllers.BenfordBootstrap.getFreqByGroupSession(id: Int)
 GET        /api/FreqByLevel/:level               controllers.BenfordBootstrap.getFreqByLevelSession(level: Int)
+GET        /api/TestsByGroup/:id                 controllers.BenfordBootstrap.getTestsByGroupSession(id: Int)
+GET        /api/TestsByLevel/:level              controllers.BenfordBootstrap.getTestsByLevelSession(level: Int)
 
 #
 GET        /api/Progress                         controllers.Application.progressSession

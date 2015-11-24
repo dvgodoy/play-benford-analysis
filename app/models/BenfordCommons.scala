@@ -11,8 +11,8 @@ object BenfordCommons {
   val tmpFolder = "/tmp"
   private val boot = Bootstrap()
   private val benf = Benford()
-  private val exactParams = boot.getExactBenfordParams()
-  private val exactProbs = boot.getExactBenfordProbs()
+  private val exactParams = benf.getExactBenfordParams
+  private val exactProbs = benf.getExactBenfordProbs
 
   val system = ActorSystem("Benford")
 
@@ -42,9 +42,11 @@ object BenfordCommons {
   def getCIsByLevel(sampleRDD: RDD[StatsCIByLevel], level: Int)(implicit jobId: JobId): JsValue = boot.getCIsByLevel(sampleRDD, level)(jobId)
   def getResultsByGroupId(resultsRDD: RDD[ResultsByLevel], groupId: Int)(implicit jobId: JobId): JsValue = boot.getResultsByGroupId(resultsRDD, groupId)(jobId)
   def getResultsByLevel(resultsRDD: RDD[ResultsByLevel], level: Int)(implicit jobId: JobId): JsValue = boot.getResultsByLevel(resultsRDD, level)(jobId)
-  def getFrequenciesByGroupId(data: DataByLevel, groupId: Int)(implicit jobId: JobId): JsValue = boot.getFrequenciesByGroupId(data, groupId)
-  def getFrequenciesByLevel(data: DataByLevel, level: Int)(implicit jobId: JobId): JsValue = boot.getFrequenciesByLevel(data, level)
-  def getGroups(data: DataByLevel)(implicit jobId: JobId): JsValue = boot.getGroups(data)
+  def getFrequenciesByGroupId(data: DataByLevel, groupId: Int): JsValue = boot.getFrequenciesByGroupId(data, groupId)
+  def getFrequenciesByLevel(data: DataByLevel, level: Int): JsValue = boot.getFrequenciesByLevel(data, level)
+  def getGroups(data: DataByLevel): JsValue = boot.getGroups(data)
   def getExactBenfordParams: JsValue = exactParams
   def getExactBenfordProbs: JsValue = exactProbs
+  def getTestsByGroupId(data: DataByLevel, groupId: Int): JsValue = boot.getTestsByGroupId(data, groupId)
+  def getTestsByLevel(data: DataByLevel, level: Int): JsValue = boot.getTestsByLevel(data, level)
 }
