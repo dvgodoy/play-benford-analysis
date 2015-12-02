@@ -10,13 +10,16 @@ import play.api.Play.current
  * @author Daniel Voigt Godoy.
  */
 object SparkCommons {
-  val r = scala.util.Random
   val appName = "PlayBenford"
-  val localMode = true
-  val masterIP = "MONSTER"
+  val hadoop = true
+  val localMode = false
+  val masterIP = "ip-172-31-0-199"
+  //val hadoop = false
+  //val localMode = true
+  //val masterIP = "MONSTER"
   val masterPort = 7077
   val metricsPort = 4040
-  val masterURL = if (localMode) "local[*]" else "spark://" + masterIP + masterPort.toString
+  val masterURL = if (localMode) "local[*]" else "spark://" + masterIP + ":" + masterPort.toString
   val metricsURL = "http://" + masterIP + ":" + metricsPort.toString + "/api/v1/applications/" + appName + "/jobs"
 
   def libs: Seq[String] = {

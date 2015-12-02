@@ -24,12 +24,14 @@ libraryDependencies  ++= Seq(
   "org.scalanlp" %% "breeze" % "0.11.2",
   "org.scalanlp" %% "breeze-natives" % "0.11.2",
   "org.scalanlp" %% "breeze-viz" % "0.11.2",
-  "com.typesafe.akka" %% "akka-actor" % "2.3.4"
+  "com.typesafe.akka" %% "akka-actor" % "2.3.4",
+  "com.github.nscala-time" %% "nscala-time" % "2.6.0"
 )
 
 dependencyOverrides ++= Set(
   "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4",
-  "com.google.guava" % "guava" % "11.0.2"
+  "com.google.guava" % "guava" % "11.0.2",
+  "org.apache.commons" % "commons-math3" % "3.2"
 )
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"

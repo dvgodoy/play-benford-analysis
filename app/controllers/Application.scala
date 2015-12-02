@@ -51,4 +51,22 @@ class Application @Inject()(ws: WSClient) extends Controller {
     )
   }*/
 
+/*abstract class ItemProcessingWorker extends Actor {
+
+  def receive = {
+    case ProcessItem(item) =>
+      try {
+        process(item) match {
+          case None => sender ! ProcessedOneItem
+          case Some(error) => sender ! error
+        }
+      } catch {
+        case t: Throwable =>
+          sender ! ItemProcessingError(item.id, "Unhandled error", Some(t))
+      }
+  }
+
+  def process(item: BatchItem): Option[ItemProcessingError]
+
+}*/
 }
