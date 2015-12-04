@@ -50,7 +50,7 @@ var accountingTests = function(id){
 var accountingLoad = function(){
     $(function(){
         $("p#loadStatus").text("Loading...");
-        get_json("/api/Load",
+        get_json("/api/acc/Load",
                 function(){
                     accountingGroups();
                     $("p#loadStatus").text("");
@@ -107,6 +107,41 @@ var accountingExactParams = function(){
                 function(){});
     });
 }
+
+var imageResult = function(threshold, whiteBg){
+    $(function(){
+        get_json("/api/NewImage/"+threshold+"/"+whiteBg,
+                function(data){
+                    $("div#newImage").html('<img src="data:image/png;base64,' + data + '" class="img-responsive"/>');
+                },
+                function(){});
+    });
+}
+
+var imageSBA = function(wSize){
+    $(function(){
+        get_json("/api/SBA/"+wSize,
+                function(){},
+                function(){});
+    });
+}
+
+var imageLoad = function(){
+    $(function(){
+        $("div#originalImage").html("");
+        $("div#newImage").html("");
+        $("div#sba").hide();
+        get_json("/api/Image",
+                function(data){
+                    $("div#originalImage").html('<img src="data:image/png;base64,' + data + '" class="img-responsive"/>');
+                    $("div#sba").show();
+                    imageSBA(15);
+                    imageResult(0.8,1);
+                },
+                function(){});
+        });
+};
+
 
 /// BUTTONS
 

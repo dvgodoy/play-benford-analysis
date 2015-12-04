@@ -4,11 +4,21 @@
 
 # Sync routes
 GET        /                                     controllers.Application.root
-POST       /api/Upload                           controllers.BenfordBootstrap.upload
 
-GET        /api/Load                             controllers.BenfordBootstrap.loadDataSession
-GET        /api/:job/Load                        controllers.BenfordBootstrap.loadDataUploaded(job: String)
-GET        /api/Load/$filePath<[\w\W]+>          controllers.BenfordBootstrap.loadDataLocal(filePath: String)
+POST       /api/acc/Upload                           controllers.BenfordBootstrap.accUpload
+GET        /api/acc/Load                             controllers.BenfordBootstrap.loadDataSession
+GET        /api/acc/:job/Load                        controllers.BenfordBootstrap.loadDataUploaded(job: String)
+GET        /api/acc/Load/$filePath<[\w\W]+>          controllers.BenfordBootstrap.loadDataLocal(filePath: String)
+
+POST       /api/img/Direct                           controllers.ImageSBA.loadImageDirect
+POST       /api/img/Upload                           controllers.ImageSBA.imgUpload
+GET        /api/img/Load                             controllers.ImageSBA.loadImageSession
+GET        /api/img/:job/Load                        controllers.ImageSBA.loadImageUploaded(job: String)
+GET        /api/img/Load/$filePath<[\w\W]+>          controllers.ImageSBA.loadImageLocal(filePath: String)
+
+GET        /api/:job/Image                           controllers.ImageSBA.getImage(job: String)
+GET        /api/:job/SBA/:wSize                      controllers.ImageSBA.calculate(job: String, wSize: Int)
+GET        /api/:job/NewImage/:threshold/:whiteBg    controllers.ImageSBA.getSBAImage(job: String, threshold: Double, whiteBg: Int)
 
 # API without Session
 GET        /api/:job/Groups                      controllers.BenfordBootstrap.getGroups(job: String)
@@ -23,6 +33,10 @@ GET        /api/:job/FreqByGroup/:id             controllers.BenfordBootstrap.ge
 GET        /api/:job/FreqByLevel/:level          controllers.BenfordBootstrap.getFreqByLevel(job: String, level: Int)
 GET        /api/:job/TestsByGroup/:id            controllers.BenfordBootstrap.getTestsByGroup(job: String, id: Int)
 GET        /api/:job/TestsByLevel/:level         controllers.BenfordBootstrap.getTestsByLevel(job: String, level: Int)
+
+GET        /api/Image                              controllers.ImageSBA.getImageSession
+GET        /api/SBA/:wSize                         controllers.ImageSBA.calculateSession(wSize: Int)
+GET        /api/NewImage/:threshold/:whiteBg       controllers.ImageSBA.getSBAImageSession(threshold: Double, whiteBg: Int)
 
 # API with Session
 GET        /api/Groups                           controllers.BenfordBootstrap.getGroupsSession

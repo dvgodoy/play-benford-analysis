@@ -8,7 +8,6 @@ import org.apache.spark.rdd.RDD
 import play.api.libs.json._
 
 object BenfordCommons {
-  val tmpFolder = "/tmp"
   private val boot = Bootstrap()
   private val benf = Benford()
   private val exactParams = benf.getExactBenfordParams

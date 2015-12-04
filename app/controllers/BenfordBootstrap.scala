@@ -11,32 +11,15 @@ import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
 
 import scala.concurrent.Future
-import org.apache.hadoop.conf._
-import org.apache.hadoop.fs._
-import java.net.URI
 
 class BenfordBootstrap extends Controller {
 
-  def copyToHdfs(localPath: String, fileName: String) = {
-    val hdfsConfig = new Configuration
-    val hdfsURI = "hdfs://" + SparkCommons.masterIP + ":9000"
-    val hdfs = FileSystem.get(new URI(hdfsURI), hdfsConfig)
-    val destFile = hdfsURI + BenfordCommons.tmpFolder + "/" + fileName
-    val targetPath = new Path(destFile)
-    if (hdfs.exists(targetPath)) {
-      hdfs.delete(targetPath, true)
-    }
-    val oriPath = new Path(localPath + fileName)
-    hdfs.copyFromLocalFile(oriPath, targetPath)
-    hdfs.close()
-  }
-
-  def upload = Action(parse.multipartFormData) { request =>
+  def accUpload = Action(parse.multipartFormData) { request =>
     val id = BenfordCommons.createJob
     request.body.file("accData").map { accData =>
-      val filePath = BenfordCommons.tmpFolder + "/" + id + ".csv"
+      val filePath = SparkCommons.tmpFolder + "/" + id + ".csv"
       accData.ref.moveTo(new File(filePath))
-      if (SparkCommons.hadoop) copyToHdfs(BenfordCommons.tmpFolder + "/", id + ".csv")
+      if (SparkCommons.hadoop) SparkCommons.copyToHdfs(SparkCommons.tmpFolder + "/", id + ".csv")
       Ok("").withSession(("job", id), ("filePath", if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + filePath else filePath))
       //Ok("").withSession(("job", id), ("filePath", filePath))
     }.getOrElse {
@@ -54,7 +37,7 @@ class BenfordBootstrap extends Controller {
   }
 
   def loadDataUploaded(id: String) = Action.async { request =>
-    val filePath = if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + BenfordCommons.tmpFolder + "/" + id + ".csv" else "file://" + BenfordCommons.tmpFolder + "/" + id + ".csv"
+    val filePath = if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + SparkCommons.tmpFolder + "/" + id + ".csv" else "file://" + SparkCommons.tmpFolder + "/" + id + ".csv"
     loadData(id, filePath).apply(request)
   }
 
