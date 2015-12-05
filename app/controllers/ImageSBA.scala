@@ -21,7 +21,7 @@ class ImageSBA extends Controller {
       val filePath = SparkCommons.tmpFolder + "/" + id + ".png"
       imgData.ref.moveTo(new File(filePath))
       if (SparkCommons.hadoop) SparkCommons.copyToHdfs(SparkCommons.tmpFolder + "/", id + ".png")
-      Ok("").withSession(("job", id), ("filePath", if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + filePath else filePath))
+      Ok("").withSession(request.session + ("jobImg", id) + ("filePathImg", if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + filePath else filePath))
     }.getOrElse {
       //Redirect(routes.Application.root).flashing(
       //  "error" -> "Missing file"
@@ -42,13 +42,13 @@ class ImageSBA extends Controller {
     implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
       img <- ask(imageActor, srvDirect(baos)).mapTo[String]
-    } yield Ok(Json.toJson(img)).withSession(("job", id))
+    } yield Ok(Json.toJson(img)).withSession(request.session + ("jobImg", id))
     res
   }
 
   def loadImageSession = Action.async { request =>
-    val id = request.session.get("job").getOrElse("")
-    val filePath = request.session.get("filePath").getOrElse("")
+    val id = request.session.get("jobImg").getOrElse("")
+    val filePath = request.session.get("filePathImg").getOrElse("")
     loadImage(id, filePath).apply(request)
   }
 
@@ -68,12 +68,12 @@ class ImageSBA extends Controller {
     implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
       res <- ask(imageActor, srvData(filePath)).mapTo[String]
-    } yield Ok(Json.toJson(res))
+    } yield Ok(Json.toJson(res)).withSession(request.session + ("jobImg", id))
     res
   }
 
   def calculateSession(windowSize: Int) = Action.async { request =>
-    val id = request.session.get("job").getOrElse("")
+    val id = request.session.get("jobImg").getOrElse("")
     calculate(id, windowSize).apply(request)
   }
 
@@ -88,7 +88,7 @@ class ImageSBA extends Controller {
   }
 
   def getImageSession() = Action.async { request =>
-    val id = request.session.get("job").getOrElse("")
+    val id = request.session.get("jobImg").getOrElse("")
     getImage(id).apply(request)
   }
 
@@ -103,7 +103,7 @@ class ImageSBA extends Controller {
   }
 
   def getSBAImageSession(threshold: Double, whiteBackground: Int) = Action.async { request =>
-    val id = request.session.get("job").getOrElse("")
+    val id = request.session.get("jobImg").getOrElse("")
     getSBAImage(id, threshold, whiteBackground).apply(request)
   }
 

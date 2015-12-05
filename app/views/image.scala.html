@@ -1,12 +1,12 @@
-
 <div id="image">
     <div class="description">
         <h1>Image Processing</h1>
         <p class="lead">Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.</p>
     </div>
+
     <div class="container">
         <div class="row">
-            <form id="uploadForm" action="/api/img/Direct" method="post" enctype="multipart/form-data" role="form">
+            <form id="uploadImgForm" action="/api/img/Direct" method="post" enctype="multipart/form-data" role="form">
                 <div class="col-lg-9">
                     <div class="input-group">
                     <span class="input-group-btn">
@@ -27,8 +27,8 @@
         </div>
         <div class="row">
             <div class="col-lg-10">
-                <div class="progress">
-                    <div id="loadProgress" class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="0"
+                <div class="progress" id="imgProgress">
+                    <div id="loadImgProgress" class="progress-bar progress-bar-warning" role="progressbar" aria-valuenow="0"
                          aria-valuemin="0" aria-valuemax="100" style="width:0%">
                     </div>
                 </div>
@@ -36,22 +36,61 @@
         </div>
     </div>
 
-    <div id="load" class="container" style="display:none">
+    <div id="process" class="container" style="display:none">
         <div class="row">
             <div class="col-lg-10">
-                <button type="button" class="btn btn-warning btn-block" id="btnLoad" onclick="imageLoad()">Load Data</button>
+                <p>
+                    <label for="wSize">Window Size (in pixels):</label>
+                    <input type="text" id="wSize" readonly style="border:0; color:#f6931f; font-weight:bold;">
+                </p>
+                <div id="wSizeSlider"></div>
+            </div>
+        </div>
+        <div class="row">
+            <p></p>
+        </div>
+        <div class="row">
+            <div class="col-lg-10">
+                <button type="button" class="btn btn-warning btn-block" id="btnSBA" onclick="imageSBA()">Process</button>
             </div>
         </div>
     </div>
 
-    <div class="container" id="sba" style="display:none">
-        <div class="row">
-            <p></p>
-        </div>
+    <div class="row">
+        <p></p>
+    </div>
 
+    <div id="show" class="container" style="display:none">
         <div class="row">
-            <div align="center" class="col-lg-5">Original Image</div>
-            <div align="center" class="col-lg-5">Processed Image</div>
+            <div class="col-lg-10">
+                <p>
+                    <label for="threshold">Points to discard (in %):</label>
+                    <input type="text" id="threshold" readonly style="border:0; color:#f6931f; font-weight:bold;">
+                </p>
+                <div id="slider"></div>
+            </div>
+            <div class="col-lg-10">
+                <div class="checkbox">
+                    <label><input type="checkbox" id="white" value="">White Background</label>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-10">
+                <button type="button" class="btn btn-warning btn-block" id="btnLoad" onclick="imageLoad()">Show</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <p>
+        </p>
+    </div>
+
+    <div id="sba" class="container" style="display:none">
+        <div class="row">
+            <div align="center" class="col-lg-5" id="originalImgTitle">Original Image</div>
+            <div align="center" class="col-lg-5" id="newImgTitle">Processed Image</div>
         </div>
 
         <div class="row">

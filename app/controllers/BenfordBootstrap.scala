@@ -20,7 +20,7 @@ class BenfordBootstrap extends Controller {
       val filePath = SparkCommons.tmpFolder + "/" + id + ".csv"
       accData.ref.moveTo(new File(filePath))
       if (SparkCommons.hadoop) SparkCommons.copyToHdfs(SparkCommons.tmpFolder + "/", id + ".csv")
-      Ok("").withSession(("job", id), ("filePath", if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + filePath else filePath))
+      Ok("").withSession(request.session + ("job", id) + ("filePath", if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + filePath else filePath))
       //Ok("").withSession(("job", id), ("filePath", filePath))
     }.getOrElse {
       //Redirect(routes.Application.root).flashing(
@@ -52,7 +52,7 @@ class BenfordBootstrap extends Controller {
     implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
       res <- ask(benfordActor, srvData(filePath)).mapTo[String]
-    } yield Ok(Json.toJson(res))
+    } yield Ok(Json.toJson(res)).withSession(request.session + ("job", id))
     res
   }
 

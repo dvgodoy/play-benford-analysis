@@ -118,25 +118,41 @@ var imageResult = function(threshold, whiteBg){
     });
 }
 
-var imageSBA = function(wSize){
+var imageSBA = function(){
     $(function(){
-        get_json("/api/SBA/"+wSize,
-                function(){},
+        get_json("/api/SBA/"+$("#wSizeSlider").slider("value"),
+                function(){
+                    $("div#show").show();
+                    imageLoad();
+                },
+                function(){});
+    });
+}
+
+var imageOriginal = function(){
+    $(function(){
+        $("div#sba").hide();
+        $("div#originalImage").html("");
+        $("div#newImage").html("");
+        get_json("/api/Image",
+                function(data){
+                    $("div#originalImage").html('<img src="data:image/png;base64,' + data + '" class="img-responsive"/>');
+                    $("div#newImgTitle").hide();
+                    $("div#newImage").hide();
+                    $("div#sba").show();
+                },
                 function(){});
     });
 }
 
 var imageLoad = function(){
     $(function(){
-        $("div#originalImage").html("");
         $("div#newImage").html("");
-        $("div#sba").hide();
         get_json("/api/Image",
                 function(data){
-                    $("div#originalImage").html('<img src="data:image/png;base64,' + data + '" class="img-responsive"/>');
-                    $("div#sba").show();
-                    imageSBA(15);
-                    imageResult(0.8,1);
+                    $("div#newImgTitle").show();
+                    $("div#newImage").show();
+                    imageResult($("#slider").slider("value") / 100.0,$("input#white").is(':checked') ? 1 : 0);
                 },
                 function(){});
         });
@@ -669,7 +685,35 @@ var progressHandlingFunction = function(e){
     }
 }
 
+var progressImageHandlingFunction = function(e){
+    if(e.lengthComputable){
+        $("div#loadImgProgress").css('width', (100*e.loaded/e.total)+'%').attr('aria-valuenow', (100*e.loaded/e.total));
+    }
+}
+
 $(function(){
+    $("#slider").slider({
+      value: 80,
+      min: 0,
+      max: 100,
+      step: 1,
+      slide: function( event, ui ) {
+        $("#threshold").val(ui.value);
+      }
+    });
+    $("#threshold").val($("#slider").slider("value"));
+
+    $("#wSizeSlider").slider({
+      value: 15,
+      min: 3,
+      max: 25,
+      step: 2,
+      slide: function( event, ui ) {
+        $("#wSize").val(ui.value);
+      }
+    });
+    $("#wSize").val($("#wSizeSlider").slider("value"));
+
     $("a#linkHome").click(function(){showCurrentDiv("description");});
     $("a#linkAccounting").click(function(e){e.preventDefault();showCurrentDiv("accounting");});
     $("a#linkImage").click(function(){showCurrentDiv("image");});
@@ -694,7 +738,7 @@ $(function(){
             },
             //Ajax events
             beforeSend:function(jqXHR, settings){
-                $("progress").show();
+                $("div#accProgress").show();
             },
             success: function(data, textStatus, jqXHR){
             },
@@ -710,6 +754,44 @@ $(function(){
             processData: false
         }).done(function(data){
             $("div#load").show();
+        });
+        e.preventDefault();
+   });
+
+   $("form#uploadImgForm").submit(function(e) {
+        $("div#show").hide();
+        $("div#sba").hide();
+
+        var formData = new FormData($(this)[0]);
+        $.ajax({
+            url: $(this).attr('action'),  //Server script to process data
+            type: 'POST',
+            xhr: function() {  // Custom XMLHttpRequest
+                var myXhr = $.ajaxSettings.xhr();
+                if(myXhr.upload){ // Check if upload property exists
+                    myXhr.upload.addEventListener('progress',progressImageHandlingFunction, false); // For handling the progress of the upload
+                }
+                return myXhr;
+            },
+            //Ajax events
+            beforeSend:function(jqXHR, settings){
+                $("div#imgProgress").show();
+            },
+            success: function(data, textStatus, jqXHR){
+            },
+            error: function(jqXHR, textStatus, errorThrown){
+            },
+            complete: function(jqXHR,textStatus){
+            },
+            // Form data
+            data: formData,
+            //Options to tell jQuery not to process data or worry about content-type.
+            cache: false,
+            contentType: false,
+            processData: false
+        }).done(function(data){
+            $("div#process").show();
+            imageOriginal();
         });
         e.preventDefault();
    });
