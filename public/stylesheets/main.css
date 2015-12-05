@@ -3,9 +3,9 @@
 }
 .navbar-inverse .navbar-nav > .active > a, .navbar-inverse .navbar-nav > .active > a:focus, .navbar-inverse .navbar-nav > .active > a:hover {
 	color: #000;
-	background-color: orange!important;
+	background-color: orange !important;
 }
-.navbar-inverse .navbar-nav > li > a:focus, .navbar-inverse .navbar-nav > li > a:hover {
+.navbar-inverse .navbar-nav > li > a#linkAccounting:focus, a#linkImage:focus, a#linkHome:focus, a#linkContact:focus, .navbar-inverse .navbar-nav > li > a#linkAccounting:hover, a#linkImage:hover, a#linkHome:hover, a#linkContact:hover {
 	color: orange;
 	background-color: #000;
 }
@@ -15,4 +15,14 @@
 .navbar-inverse .navbar-brand {
 	color: #000;
 	background-color: transparent;
+}
+footer {
+	padding: 50px 0px;
+	background-color: #FF8800 !important;
+}
+footer a {
+	color: #000;
+}
+.container#main {
+	padding: 15px 0px 50px 0px;
 }

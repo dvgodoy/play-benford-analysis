@@ -41,25 +41,90 @@
                 <span class="icon-bar"></span>
                 <span class="icon-bar"></span>
             </button>
-            <div class="navbar-brand">Benford Analysis with Spark</div>
+            <div class="navbar-brand">Benford Analysis for Spark</div>
         </div>
         <div id="navbar" class="collapse navbar-collapse">
             <ul class="nav navbar-nav">
                 <li><a id="linkHome" href="#">Home</a></li>
                 <li><a id="linkAccounting" href="#accounting">Accounting</a></li>
                 <li><a id="linkImage" href="#image">Image Processing</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#contact">Contact</a></li>
+                <li><a id="linkSignal" href="#">Signal Processing</a></li>
+                <li><a id="linkNetwork" href="#">Network Analysis</a></li>
+                <li><a id="linkContact" href="#contact">Contact</a></li>
             </ul>
         </div><!--/.nav-collapse -->
     </div>
 </nav>
 
-<div class="container">
+<div class="container" id="main">
 
-    <div id="description" class="description">
-        <h1>Benford Analysis</h1>
-        <p class="lead">Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.</p>
+    <p></p>
+    <div class="row" id="description">
+        <div class="col-lg-2">
+            <img src="@routes.Assets.versioned("images/package_logo.png")" class="img-responsive"/>
+        </div>
+        <div class="description col-lg-10">
+            <h1>Benford Analysis for Spark</h1>
+            <p class="lead">Benford's Law is a phenomenological law about the frequency distribution of leading digits in many real-life sets of numerical data and it has a wide range of applications.</p>
+            <h2>Accounting</h2>
+            <p>
+                Benford's Law has been used for detecting fraud in accounting records for several years. Accounting records are supposed to follow it and large deviations from the expected probabilities for the first two significant digits may suggest the numbers have been tampered with.
+                <br>
+                Traditional statistical tests, though, yield a large number of false positives when they are applied to large data sets. That is commonly known as the "excessive power" of the tests.
+                <br>
+                Recently, two techniques based on bootstrap procedures were developed to tackle this problem yielding higher accuracy and sensitivity.
+                <br>
+                The bootstrap procedure is very computationally-expensive yet highly parallelizable, so one of the goals of this package is to enable the application of these new techniques in large data sets while delivering results fast.
+                <br>
+                <p>
+                The implementation is based on the following papers so, for further details on the procedures and the decision criteria, please refer to it:
+                <br>
+                <a href="http://epublications.marquette.edu/cgi/viewcontent.cgi?article=1031&context=account_fac" target="_blank">SUH, I.; HEADRICK, T.C. A comparative analysis of the bootstrap versus traditional statistical procedures applied to digital analysis based on Benford’s Law. Journal of Forensic and Investigative Accounting, Vol. 2, n. 2, p. 144-175, 2010.</a>
+                <br>
+                <a href="http://epublications.marquette.edu/cgi/viewcontent.cgi?article=1045&context=account_fac" target="_blank">SUH, I., HEADRICK, T.C.; MINABURO, S. An Effective and Efficient Analytic Technique: A Bootstrap Regression Procedure and Benford's Law. Journal of Forensic & Investigative Accounting, Vol. 3, n. 3, p.25-44, 2011.</a>
+                </p>
+            </p>
+            <h2>Image Processing</h2>
+            <p>
+                A novel use of Benford's Law is edge detection. Sets of pixels depicting edges show higher adherence to the expected distribution of the leading digit.
+                <br>
+                So, researchers have developed a metric called Benford Goodness of Parameter (BGP) which is equivalent to an RMSE of the observed distribution that can be applied to subsets of pixels as defined by a sliding window over the original image. This procedure was named 2D-Scanning Benford Analysis (2D-SBA).
+                <br>
+                Similarly to a convolutional kernel, the use of this transformation based on the BGP of a given set of pixels allows the detection of faint features in images.
+                <br>
+                It is easy to see that even an image with moderate size will span thousands of windows to be transformed. Once again, the goal of this package is to quickly deliver results when applying the SBA procedure.
+                <br>
+                <p>
+                The implementation follows this paper so, for further details on the procedure, please refer to it:
+                <br>
+                <a href="http://arxiv.org/abs/1408.5735" target="_blank">BHOLE, G.; SHUKLA, A.; MAHESH, T.S. Benford Analysis: A useful paradigm for spectroscopic analysis</a>
+                </p>
+            </p>
+            <h2>Signal Processing</h2>
+            <p>
+                The Benford Goodness of Parameter (BGP) metric and the Scanning Benford Analysis (SBA) can also be used for detection of weak peaks in signals.
+                <br>
+                This feature is currently under development in the Benford Analysis for Spark package.
+                <br>
+                <p>
+                For further details, please refer to the original paper:
+                <br>
+                <a href="http://arxiv.org/abs/1408.5735" target="_blank">BHOLE, G.; SHUKLA, A.; MAHESH, T.S. Benford Analysis: A useful paradigm for spectroscopic analysis</a>
+                </p>
+            </p>
+            <h2>Network Analysis</h2>
+            <p>
+                Yet another novel use of Benford's Law is the detection of suspiciously behaving nodes in social networks.
+                <br>
+                This feature is currently under development in the Benford Analysis for Spark package.
+                <br>
+                <p>
+                For further details, please refer to the original paper:
+                <br>
+                <a href="http://journals.plos.org/plosone/article?id=10.1371/journal.pone.0135169" target="_blank">GOLDBECK, J. Benford's Law Applies to Online Social Networks</a>
+                </p>
+            </p>
+        </div>
     </div>
 
     @accounting()
@@ -69,6 +134,40 @@
 </div><!-- /.container -->
 
 @content
+
+<footer id="contact">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 footer-left">
+                <p>Benford Analysis for Spark package and Benford Analysis Play application were developed as my final project in the Big Data Engineering track of <a href="http://www.datascienceretreat.com">Data Science Retreat</a>, a 3-month intensive course in Data Science and Big Data.</p>
+                <p>
+                    <iframe id="gh-fork1" src="http://ghbtns.com/github-btn.html?user=dvgodoy&repo=spark-benford-analysis&type=fork" allowtransparency="true" frameborder="0" scrolling="0" width="55px" height="20px"></iframe>
+                    <iframe id="gh-star1" src="http://ghbtns.com/github-btn.html?user=dvgodoy&repo=spark-benford-analysis&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="80px" height="20px"></iframe>
+                    <a href="http://github.com/dvgodoy/spark-benford-analysis" target="_blank">Benford Analysis for Spark package</a>
+                    <br>
+                    <iframe id="gh-fork2" src="http://ghbtns.com/github-btn.html?user=dvgodoy&repo=play-benford-analysis&type=fork" allowtransparency="true" frameborder="0" scrolling="0" width="55px" height="20px"></iframe>
+                    <iframe id="gh-star2" src="http://ghbtns.com/github-btn.html?user=dvgodoy&repo=play-benford-analysis&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="80px" height="20px"></iframe>
+                    <a href="http://github.com/dvgodoy/play-benford-analysis" target="_blank">Benford Analysis Play application</a>
+                    <br>
+                </p>
+            </div>
+            <div class="col-lg-4 footer-right">
+                <p>Contact information
+                <br>Daniel Voigt Godoy
+                <br><a href="mailto:dvgodoy@@gmail.com">dvgodoy@@gmail.com</a>
+                <br><a href="https://br.linkedin.com/in/dvgodoy" target="_blank">LinkedIn Profile</a>
+                </p>
+            </div>
+        </div>
+        <hr>
+        <div class="row">
+            <div class="col-lg-12 footer-below">
+                <p>© Daniel Voigt Godoy 2015.</p>
+                <p>Benford Analysis for Spark package and Benford Analysis Play application both licensed under the <a href="http://www.apache.org/licenses/LICENSE-2.0">Apache License v2.0</a>.</p>
+            </div>
+        </div>
+    </div>
+</footer>
 
 <!-- Bootstrap core JavaScript
 ================================================== -->

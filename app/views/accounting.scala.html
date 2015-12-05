@@ -1,10 +1,36 @@
 
 <div id="accounting">
-    <div class="description">
-        <h1>Accounting</h1>
-        <p class="lead">Use this document as a way to quickly start any new project.<br> All you get is this text and a mostly barebones HTML document.</p>
+    <div class="row">
+        <div class="col-lg-2">
+            <img src="@routes.Assets.versioned("images/package_logo.png")" class="img-responsive"/>
+        </div>
+        <div class="description col-lg-10">
+            <h1>Accounting</h1>
+            <p class="col-lg-10">
+                To have your accounting records Benford-analysed, please submit a CSV file containing the values in the first column.
+                <br>
+                If your values have an associated hierarchical structure (for instance, departments and sub-departments in a company), you can take advantage of the drill-down capability, that is, you can test your accounting data for different levels of granularity.
+                <br>
+                To include the structure of your data, insert it in the columns that follow the values, from top-level in the left-most column to bottom-level in the right-most column.
+                <br>
+                <br>
+                Your file should look like this:
+                <br>
+                <br>
+                10.35,COMPANY NAME,DEPARTMENT A,SUB-DEPARTMENT A.1,...
+                <br>
+                128.17,COMPANY NAME,DEPARTMENT A,SUB-DEPARTMENT A.2,...
+                <br>
+                8712.33,COMPANY NAME,DEPARTMENT B,SUB-DEPARTMENT B.1,...
+                <br>
+                ...
+                <br>
+                <br>
+                When the upload is complete, click on Load Data and explore the results!
+            </p>
+        </div>
     </div>
-
+    <p></p>
     <div class="container">
         <div class="row">
             <form id="uploadForm" action="/api/acc/Upload" method="post" enctype="multipart/form-data" role="form">
