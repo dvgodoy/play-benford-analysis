@@ -9,7 +9,7 @@ import javax.imageio.ImageIO
 import org.scalactic._
 import models.{ImageCommons, SparkCommons}
 import models.ImageService._
-import play.api.libs.json.{Json}
+import play.api.libs.json.{JsValue, Json}
 import play.api.mvc._
 
 import scala.concurrent.Future
@@ -43,10 +43,10 @@ class ImageSBA extends Controller {
     ImageIO.write(result, "png", baos)
     implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
-      img <- ask(imageActor, srvDirect(baos)).mapTo[Or[String, One[ErrorMessage]]]
+      img <- ask(imageActor, srvDirect(baos)).mapTo[Or[JsValue, One[ErrorMessage]]]
     } yield img match {
-        case Good(s) => Ok(s).withSession(request.session + ("jobImg", id))
-        case Bad(e) =>  NotAcceptable(e.head).withSession(request.session + ("jobImg", id))
+        case Good(s) => Ok(Json.toJson(s)).withSession(request.session + ("jobImg", id))
+        case Bad(e) =>  NotAcceptable(Json.obj("error" -> Json.toJson(e.head))).withSession(request.session + ("jobImg", id))
       }
     res
   }

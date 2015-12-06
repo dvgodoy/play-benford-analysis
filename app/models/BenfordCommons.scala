@@ -24,34 +24,32 @@ object BenfordCommons {
     system.actorOf(Props[BenfordActor], name = uuid)
     uuid
   }
-  def loadData(filePath: String)(implicit jobId: JobId): DataByLevel = {
+  def loadData(filePath: String)(implicit jobId: JobId): DataByLevelMsg = {
     SparkCommons.sc.setJobGroup(jobId.id, jobId.id)
     boot.loadData(SparkCommons.sc, filePath)(jobId)
   }
-  def calcBasicBoot(data: DataByLevel, numberSamples: Int = 25000): BasicBoot = {
+  def calcBasicBoot(data: DataByLevelMsg, numberSamples: Int = 25000): BasicBootMsg = {
     boot.calcBasicBoot(SparkCommons.sc, data, numberSamples)
   }
-  def calcDataStats(data: DataByLevel, groupId: Int): RDD[((Long, Int), StatsDigits)] = {
+  def calcDataStats(data: DataByLevelMsg, groupId: Int): DataStatsMsg = {
     boot.calcDataStats(data, groupId)
   }
-  def calcSample(basicBoot: BasicBoot, dataStatsRDD: RDD[((Long, Int), StatsDigits)], data: DataByLevel, groupId: Int): RDD[StatsCIByLevel] = {
+  def calcSample(basicBoot: BasicBootMsg, dataStatsRDD: DataStatsMsg, data: DataByLevelMsg, groupId: Int): StatsCIByLevelMsg = {
     boot.calcSampleCIs(basicBoot, dataStatsRDD, data, groupId)
   }
-  def calcBenford(basicBoot: BasicBoot, dataStatsRDD: RDD[((Long, Int), StatsDigits)], data: DataByLevel, groupId: Int): RDD[StatsCIByLevel] = {
+  def calcBenford(basicBoot: BasicBootMsg, dataStatsRDD: DataStatsMsg, data: DataByLevelMsg, groupId: Int): StatsCIByLevelMsg = {
     benf.calcBenfordCIs(basicBoot, dataStatsRDD, data, groupId)
   }
-  def calcResults(sampleRDD: RDD[StatsCIByLevel], benfordRDD: RDD[StatsCIByLevel]): RDD[ResultsByLevel] = {
+  def calcResults(sampleRDD: StatsCIByLevelMsg, benfordRDD: StatsCIByLevelMsg): ResultsByLevelMsg = {
     boot.calcResults(sampleRDD, benfordRDD)
   }
-  def getCIsByGroupId(sampleRDD: RDD[StatsCIByLevel])(implicit jobId: JobId): JsValue = boot.getCIs(sampleRDD)(jobId)
-  //def getCIsByLevel(sampleRDD: RDD[StatsCIByLevel], level: Int)(implicit jobId: JobId): JsValue = boot.getCIsByLevel(sampleRDD, level)(jobId)
-  def getResultsByGroupId(resultsRDD: RDD[ResultsByLevel])(implicit jobId: JobId): JsValue = boot.getResults(resultsRDD)(jobId)
-  //def getResultsByLevel(resultsRDD: RDD[ResultsByLevel], level: Int)(implicit jobId: JobId): JsValue = boot.getResultsByLevel(resultsRDD, level)(jobId)
-  def getFrequenciesByGroupId(data: DataByLevel, groupId: Int): JsValue = boot.getFrequenciesByGroupId(data, groupId)
-  def getFrequenciesByLevel(data: DataByLevel, level: Int): JsValue = boot.getFrequenciesByLevel(data, level)
-  def getGroups(data: DataByLevel): JsValue = boot.getGroups(data)
+  def getCIsByGroupId(sampleRDD: StatsCIByLevelMsg)(implicit jobId: JobId): JsValue = boot.getCIs(sampleRDD)(jobId)
+  def getResultsByGroupId(resultsRDD: ResultsByLevelMsg)(implicit jobId: JobId): JsValue = boot.getResults(resultsRDD)(jobId)
+  def getFrequenciesByGroupId(data: DataByLevelMsg, groupId: Int): JsValue = boot.getFrequenciesByGroupId(data, groupId)
+  def getFrequenciesByLevel(data: DataByLevelMsg, level: Int): JsValue = boot.getFrequenciesByLevel(data, level)
+  def getGroups(data: DataByLevelMsg): JsValue = boot.getGroups(data)
   def getExactBenfordParams: JsValue = exactParams
   def getExactBenfordProbs: JsValue = exactProbs
-  def getTestsByGroupId(data: DataByLevel, groupId: Int): JsValue = boot.getTestsByGroupId(data, groupId)
-  def getTestsByLevel(data: DataByLevel, level: Int): JsValue = boot.getTestsByLevel(data, level)
+  def getTestsByGroupId(data: DataByLevelMsg, groupId: Int): JsValue = boot.getTestsByGroupId(data, groupId)
+  def getTestsByLevel(data: DataByLevelMsg, level: Int): JsValue = boot.getTestsByLevel(data, level)
 }

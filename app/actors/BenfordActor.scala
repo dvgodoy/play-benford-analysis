@@ -6,7 +6,8 @@ import akka.pattern.pipe
 import com.dvgodoy.spark.benford.util._
 import models.BenfordCommons
 import models.BenfordService._
-import org.apache.spark.rdd.RDD
+import org.scalactic._
+import play.api.libs.json.{JsValue, Json}
 
 import scala.concurrent.Future
 
@@ -30,48 +31,39 @@ class BenfordActor extends Actor with ActorLogging {
     scheduler.cancel()
   }*/
 
-  private var data: DataByLevel = _
+  private var data: DataByLevelMsg = _
   private var numberSamples: Int = 25000
 
-  protected var basicBoot: BasicBoot = _
-  protected var dataStatsRDD: Array[RDD[((Long, Int), StatsDigits)]] = _
-  protected var sampleRDD: Array[RDD[StatsCIByLevel]] = _
-  protected var benfordRDD: Array[RDD[StatsCIByLevel]] = _
-  protected var resultsRDD: Array[RDD[ResultsByLevel]] = _
+  protected var basicBoot: BasicBootMsg = _
+  protected var dataStatsRDD: Array[DataStatsMsg] = _
+  protected var sampleRDD: Array[StatsCIByLevelMsg] = _
+  protected var benfordRDD: Array[StatsCIByLevelMsg] = _
+  protected var resultsRDD: Array[ResultsByLevelMsg] = _
 
   implicit val jobId = JobId(self.path.name)
 
-  /*def calc(groupId: Int) = {
-    if (dataStatsRDD(groupId) == null) {
-      dataStatsRDD(groupId) = BenfordCommons.calcDataStats(data, groupId)
-      sampleRDD(groupId) = BenfordCommons.calcSample(basicBoot, dataStatsRDD(groupId), data, groupId)
-      benfordRDD(groupId) = BenfordCommons.calcBenford(basicBoot, dataStatsRDD(groupId), data, groupId)
-      resultsRDD(groupId) = BenfordCommons.calcResults(sampleRDD(groupId), benfordRDD(groupId))
-    }
-  }*/
-
-  def calcDataStats(groupId: Int): RDD[((Long, Int), StatsDigits)] = {
+  def calcDataStats(groupId: Int): DataStatsMsg = {
     if (dataStatsRDD(groupId) == null) {
       dataStatsRDD(groupId) = BenfordCommons.calcDataStats(data, groupId)
     }
     dataStatsRDD(groupId)
   }
 
-  def calcSample(groupId: Int): RDD[StatsCIByLevel] = {
+  def calcSample(groupId: Int): StatsCIByLevelMsg = {
     if (sampleRDD(groupId) == null) {
       sampleRDD(groupId) = BenfordCommons.calcSample(basicBoot, calcDataStats(groupId), data, groupId)
     }
     sampleRDD(groupId)
   }
 
-  def calcBenford(groupId: Int): RDD[StatsCIByLevel] = {
+  def calcBenford(groupId: Int): StatsCIByLevelMsg = {
     if (benfordRDD(groupId) == null) {
       benfordRDD(groupId) = BenfordCommons.calcBenford(basicBoot, calcDataStats(groupId), data, groupId)
     }
     benfordRDD(groupId)
   }
 
-  def calcResults(groupId: Int): RDD[ResultsByLevel] = {
+  def calcResults(groupId: Int): ResultsByLevelMsg = {
     if (resultsRDD(groupId) == null) {
       resultsRDD(groupId) = BenfordCommons.calcResults(calcSample(groupId), calcBenford(groupId))
     }
@@ -91,18 +83,30 @@ class BenfordActor extends Actor with ActorLogging {
     case srvData(filePath: String) => {
       val originalSender = sender
       data = BenfordCommons.loadData(filePath)
-      val numLevels = data.levels.keys.size
-      dataStatsRDD = new Array[RDD[((Long, Int), StatsDigits)]](numLevels)
-      sampleRDD = new Array[RDD[StatsCIByLevel]](numLevels)
-      benfordRDD = new Array[RDD[StatsCIByLevel]](numLevels)
-      resultsRDD = new Array[RDD[ResultsByLevel]](numLevels)
-      originalSender ! Success(self.path.name)
+      val result: Or[JsValue, Every[ErrorMessage]] = data match {
+        case Good(dbl) => {
+          val numLevels = data.get.levels.keys.size
+          dataStatsRDD = new Array[DataStatsMsg](numLevels)
+          sampleRDD = new Array[StatsCIByLevelMsg](numLevels)
+          benfordRDD = new Array[StatsCIByLevelMsg](numLevels)
+          resultsRDD = new Array[ResultsByLevelMsg](numLevels)
+          Good(Json.toJson(self.path.name))
+        }
+        case Bad(e) => Bad(e)
+      }
+      //originalSender ! Success(result)
+      Future(result) pipeTo originalSender
     }
     case srvCalc(numSamples: Int) => {
       val originalSender = sender
       numberSamples = numSamples
       basicBoot = BenfordCommons.calcBasicBoot(data, numSamples)
-      originalSender ! Success("")
+      val result: Or[JsValue, Every[ErrorMessage]] = basicBoot match {
+        case Good(bb) => Good(Json.toJson("ok"))
+        case Bad(e) => Bad(e)
+      }
+      //originalSender ! Success(result)
+      Future(result) pipeTo originalSender
     }
     case srvNumSamples() => {
       val originalSender = sender
@@ -113,21 +117,21 @@ class BenfordActor extends Actor with ActorLogging {
       Future(BenfordCommons.getCIsByGroupId(calcSample(groupId))) pipeTo originalSender
     }
     case srvCIsByLevel(level: Int) => {
-      //Future(BenfordCommons.getCIsByLevel(sampleRDD, level)) pipeTo sender
+      // to be implemented
     }
     case srvBenfordCIsByGroupId(groupId: Int) => {
       val originalSender = sender
       Future(BenfordCommons.getCIsByGroupId(calcBenford(groupId))) pipeTo originalSender
     }
     case srvBenfordCIsByLevel(level: Int) => {
-      //Future(BenfordCommons.getCIsByLevel(benfordRDD, level)) pipeTo sender
+      // to be implemented
     }
     case srvResultsByGroupId(groupId: Int) => {
       val originalSender = sender
       Future(BenfordCommons.getResultsByGroupId(calcResults(groupId))) pipeTo originalSender
     }
     case srvResultsByLevel(level: Int) => {
-      //Future(BenfordCommons.getResultsByLevel(resultsRDD, level)) pipeTo sender
+      // to be implemented
     }
     case srvFrequenciesByGroupId(groupId: Int) => {
       val originalSender = sender

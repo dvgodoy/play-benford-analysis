@@ -10,6 +10,7 @@ import models.ImageService._
 import org.apache.commons.codec.binary.Base64
 import org.apache.commons.io.IOUtils
 import org.scalactic._
+import play.api.libs.json.{JsValue, Json}
 
 import scala.util.Failure
 
@@ -26,14 +27,14 @@ class ImageActor extends Actor with ActorLogging {
     case srvDirect(baos: java.io.ByteArrayOutputStream) => {
       val originalSender = sender
       data = ImageCommons.loadData(baos)
-      val result: Or[String, One[ErrorMessage]] = data match {
+      val result: Or[JsValue, Every[ErrorMessage]] = data match {
         case Good(s) => {
           original = baos
           val is = new ByteArrayInputStream(baos.toByteArray)
           val bytes = IOUtils.toByteArray(is)
           val bytes64 = Base64.encodeBase64(bytes)
           image = new String(bytes64)
-          Good("")
+          Good(Json.toJson(self.path.name))
         }
         case Bad(e) => Bad(e)
       }

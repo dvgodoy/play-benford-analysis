@@ -7,7 +7,8 @@ import akka.util.Timeout
 import java.io.File
 import models.{SparkCommons, BenfordCommons}
 import models.BenfordService._
-import play.api.libs.json.{JsValue, Json}
+import org.scalactic._
+import play.api.libs.json.{JsUndefined, JsDefined, JsValue, Json}
 import play.api.mvc._
 
 import scala.concurrent.Future
@@ -51,8 +52,11 @@ class BenfordBootstrap extends Controller {
     val benfordActor = BenfordCommons.getJob(id)
     implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
-      res <- ask(benfordActor, srvData(filePath)).mapTo[String]
-    } yield Ok(Json.toJson(res)).withSession(request.session + ("job", id))
+      rsp <- ask(benfordActor, srvData(filePath)).mapTo[Or[JsValue, Every[ErrorMessage]]]
+    } yield rsp match {
+        case Good(s) => Ok(Json.toJson(s)).withSession(request.session + ("job", id))
+        case Bad(e) =>  NotAcceptable(Json.obj("error" -> Json.toJson(e.head))).withSession(request.session + ("jobImg", id))
+      }
     res
   }
 
@@ -67,7 +71,11 @@ class BenfordBootstrap extends Controller {
     implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
       f <- ask(benfordActor, srvGroups()).mapTo[JsValue]
-    } yield Ok(f)
+    //} yield Ok(f)
+    } yield (f \ "error") match {
+        case msg: JsDefined => BadRequest(msg.get)
+        case res: JsUndefined => Ok(f)
+      }
     res
   }
 
@@ -81,8 +89,11 @@ class BenfordBootstrap extends Controller {
     val benfordActor = BenfordCommons.getJob(id)
     implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
-      res <- ask(benfordActor, srvCalc(numSamples)).mapTo[String]
-    } yield Ok(Json.toJson(res))
+      rsp <- ask(benfordActor, srvCalc(numSamples)).mapTo[Or[JsValue, Every[ErrorMessage]]]
+    } yield rsp match {
+        case Good(s) => Ok(Json.toJson(s))
+        case Bad(e) => BadRequest(Json.obj("error" -> Json.toJson(e.head)))
+      }
     res
   }
 

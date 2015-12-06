@@ -12,7 +12,7 @@ var get_json = function(url, funcSuccess, funcError) {
             funcSuccess(data);
         },
         error: function(jqXHR, textStatus, errorThrown){
-            funcError(data);
+            funcError($.parseJSON(jqXHR.responseText).error);
         },
         complete: function(jqXHR,textStatus){
         }
@@ -23,7 +23,10 @@ var accountingGroups = function(){
     $(function(){
         get_json("/api/Groups",
                 addGroups,
-                function(){});
+                function(msg){
+                    $("div#errorAcc").show();
+                    $("strong#errorAccMessage").text(msg);
+                });
     });
 }
 
@@ -48,24 +51,25 @@ var accountingTests = function(id){
 }
 
 var accountingLoad = function(){
+    $("div#errorAcc").hide();
     $(function(){
-        $("p#loadStatus").text("Loading...");
         get_json("/api/acc/Load",
                 function(){
                     accountingGroups();
-                    $("p#loadStatus").text("");
                     accountingCalc(1000);
                 },
-                function(){$("p#loadStatus").text("Error!");});
+                function(msg){
+                    $("div#errorAcc").show();
+                    $("strong#errorAccMessage").text(msg);
+                });
         });
 };
 
 var accountingCalc = function(numSamples){
     $(function(){
-        $("p#calcStatus").text("Calculating...");
         get_json("/api/Calc/"+numSamples,
-                function(){$("p#calcStatus").text("Calculated!");},
-                function(){$("p#calcStatus").text("Error!");});
+                function(){},
+                function(){});
     });
 }
 
@@ -725,6 +729,12 @@ $(function(){
    });
 
    $("form#uploadForm").submit(function(e) {
+        $("div#results").hide();
+        $("div#load").hide();
+
+        $("div#results").html("");
+        $("div#groups").html("");
+        $("div#frequencies").html("");
         var formData = new FormData($(this)[0]);
         $.ajax({
             url: $(this).attr('action'),  //Server script to process data
@@ -753,7 +763,10 @@ $(function(){
             contentType: false,
             processData: false
         }).done(function(data){
+            $("div#errorAcc").hide();
+            $("strong#errorAccMessage").text("");
             $("div#load").show();
+            $("div#results").show();
         });
         e.preventDefault();
    });
@@ -783,7 +796,7 @@ $(function(){
             },
             error: function(jqXHR, textStatus, errorThrown){
                 $("div#errorImg").show();
-                $("strong#errorImgMessage").text(jqXHR.responseText);
+                $("strong#errorImgMessage").text($.parseJSON(jqXHR.responseText).error);
             },
             complete: function(jqXHR,textStatus){
             },
