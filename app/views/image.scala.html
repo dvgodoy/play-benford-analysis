@@ -5,16 +5,25 @@
         </div>
         <div class="description col-lg-10">
             <h1>Image Processing</h1>
-            <p class="col-lg-10">
-                To have your image processed, please submit a gray-scale PNG image.
-                <br>
-                Then choose the window size to be used in the 2D-Scanning Benford Analysis (2D-SBA) and click on Process. Lower values yield better results for small images.
-                <br>
-                Finally, choose the percentage of pixels to be discarded - the remaining pixels will contain edge information. Values from 80% and up yield good results.
-                <br>
-                The discarded pixels are showed in black by default but you can choose a white background instead.
+            <p>
+                <h4>It is really easy to process an image! All you have to do is:</h4>
+                <ul>
+                    <li>submit a gray-scale image;</li>
+                    <li>choose a window size to be used in the 2D-Scanning Benford Analysis (2D-SBA);<br>
+                        (lower values yield better results for small images)</li>
+                    <li>choose the percentage of pixels to be discarded - the remaining pixels will contain edge information;<br>
+                        (values from 80% and up yield good results)</li>
+                    <li>check "White Background", if you do not want discarded pixels showed in black.</li>
+                </ul>
+                <h4>You can try different parameters to best fit the processed image to your needs!</h4>
             </p>
         </div>
+    </div>
+
+    <p></p>
+
+    <div class="alert alert-danger fade in col-lg-10" style="display:none" id="errorImg">
+        <strong id="errorImgMessage">Error!</strong>
     </div>
 
     <p></p>
@@ -77,7 +86,7 @@
         <div class="row">
             <div class="col-lg-10">
                 <p>
-                    <label for="threshold">Choose the % of points to discard:</label>
+                    <label for="threshold">Choose the % of pixels to be discarded:</label>
                     <input type="text" id="threshold" readonly style="border:0; color:#f6931f; font-weight:bold;">
                 </p>
                 <div id="slider"></div>

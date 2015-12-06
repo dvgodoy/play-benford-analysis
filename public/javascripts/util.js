@@ -759,8 +759,10 @@ $(function(){
    });
 
    $("form#uploadImgForm").submit(function(e) {
+        $("div#process").hide();
         $("div#show").hide();
         $("div#sba").hide();
+        $("div#errorImg").hide();
 
         var formData = new FormData($(this)[0]);
         $.ajax({
@@ -780,6 +782,8 @@ $(function(){
             success: function(data, textStatus, jqXHR){
             },
             error: function(jqXHR, textStatus, errorThrown){
+                $("div#errorImg").show();
+                $("strong#errorImgMessage").text(jqXHR.responseText);
             },
             complete: function(jqXHR,textStatus){
             },

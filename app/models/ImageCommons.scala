@@ -5,6 +5,8 @@ import akka.actor.{Props, ActorSelection, ActorSystem}
 import com.dvgodoy.spark.benford.util.JobId
 import com.dvgodoy.spark.benford.image.SBA._
 
+import org.scalactic._
+
 object ImageCommons {
   val system = ActorSystem("SBA")
 
@@ -17,10 +19,10 @@ object ImageCommons {
     system.actorOf(Props[ImageActor], name = uuid)
     uuid
   }
-  def loadData(baos: java.io.ByteArrayOutputStream): SBAImageData = {
+  def loadData(baos: java.io.ByteArrayOutputStream): Or[SBAImageData, One[ErrorMessage]] = {
     loadDirect(baos)
   }
-  def loadData(filePath: String): SBAImageData = {
+  def loadData(filePath: String) = {
     loadImage(filePath)
   }
   def calcSBA(imageData: SBAImageData, wSize: Int = 15)(implicit jobId: JobId): SBAData = {

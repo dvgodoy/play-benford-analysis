@@ -25,7 +25,8 @@ libraryDependencies  ++= Seq(
   "org.scalanlp" %% "breeze-natives" % "0.11.2",
   "org.scalanlp" %% "breeze-viz" % "0.11.2",
   "com.typesafe.akka" %% "akka-actor" % "2.3.4",
-  "com.github.nscala-time" %% "nscala-time" % "2.6.0"
+  "com.github.nscala-time" %% "nscala-time" % "2.6.0",
+  "org.scalactic" %% "scalactic" % "2.2.0"
 )
 
 dependencyOverrides ++= Set(
