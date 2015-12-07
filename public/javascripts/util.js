@@ -20,6 +20,7 @@ var get_json = function(url, funcSuccess, funcError) {
 };
 
 var accountingGroups = function(){
+    $("div#errorAcc").hide();
     $(function(){
         get_json("/api/Groups",
                 addGroups,
@@ -31,22 +32,30 @@ var accountingGroups = function(){
 }
 
 var accountingFrequencies = function(id){
+    $("div#errorAcc").hide();
     $(function(){
         get_json("/api/FreqByGroup/"+id,
                 function(data){
                     addFrequencies(id, data);
                 },
-                function(){});
+                function(msg){
+                    $("div#errorAcc").show();
+                    $("strong#errorAccMessage").text(msg);
+                });
     });
 }
 
 var accountingTests = function(id){
+    $("div#errorAcc").hide();
     $(function(){
         get_json("/api/TestsByGroup/"+id,
                 function(data){
                     addTests(id, data);
                 },
-                function(){});
+                function(msg){
+                    $("div#errorAcc").show();
+                    $("strong#errorAccMessage").text(msg);
+                });
     });
 }
 
@@ -66,86 +75,117 @@ var accountingLoad = function(){
 };
 
 var accountingCalc = function(numSamples){
+    $("div#errorAcc").hide();
     $(function(){
         get_json("/api/Calc/"+numSamples,
                 function(){},
-                function(){});
+                function(msg){
+                    $("div#errorAcc").show();
+                    $("strong#errorAccMessage").text(msg);
+                });
     });
 }
 
 var accountingCIs = function(id){
+    $("div#errorAcc").hide();
     $(function(){
         get_json("/api/CIsByGroup/"+id,
                 function(data){
                     preProcessCIsByGroup(data);
                     showResult(id,"d1d2");
                 },
-                function(){});
+                function(msg){
+                    $("div#errorAcc").show();
+                    $("strong#errorAccMessage").text(msg);
+                });
         get_json("/api/BenfCIsByGroup/"+id,
                 function(data){
                     preProcessBenfCIsByGroup(data);
                     showResult(id,"d1d2");
                 },
-                function(){});
+                function(msg){
+                    $("div#errorAcc").show();
+                    $("strong#errorAccMessage").text(msg);
+                });
     });
 }
 
 var accountingResults = function(id){
+    $("div#errorAcc").hide();
     $(function(){
         get_json("/api/ResultsByGroup/"+id,
                 function(data){
                     processResultsByGroup(data);
                     showResult(id,"d1d2");
                 },
-                function(){});
+                function(msg){
+                    $("div#errorAcc").show();
+                    $("strong#errorAccMessage").text(msg);
+                });
     });
 }
 
 var accountingExactParams = function(){
+    $("div#errorAcc").hide();
     $(function(){
         get_json("/api/ExactParams",
                 function(data){
                     processExact(data);
                     showResult(id,"d1d2");
                 },
-                function(){});
+                function(msg){
+                    $("div#errorAcc").show();
+                    $("strong#errorAccMessage").text(msg);
+                });
     });
 }
 
 var imageResult = function(threshold, whiteBg){
+    $("div#errorImg").hide();
     $(function(){
         get_json("/api/NewImage/"+threshold+"/"+whiteBg,
                 function(data){
-                    $("div#newImage").html('<img src="data:image/png;base64,' + data + '" class="img-responsive"/>');
+                    $("div#newImage").html('<img src="data:image/png;base64,' + data.image + '" class="img-responsive"/>');
                 },
-                function(){});
+                function(msg){
+                    $("div#errorImg").show();
+                    $("strong#errorImgMessage").text(msg);
+                });
     });
 }
 
 var imageSBA = function(){
+    $("div#errorImg").hide();
     $(function(){
         get_json("/api/SBA/"+$("#wSizeSlider").slider("value"),
                 function(){
                     $("div#show").show();
                     imageLoad();
                 },
-                function(){});
+                function(msg){
+                    $("div#errorImg").show();
+                    $("strong#errorImgMessage").text(msg);
+                });
     });
 }
 
 var imageOriginal = function(){
+    $("div#errorImg").hide();
     $(function(){
         $("div#sba").hide();
         $("div#originalImage").html("");
         $("div#newImage").html("");
         get_json("/api/Image",
                 function(data){
-                    $("div#originalImage").html('<img src="data:image/png;base64,' + data + '" class="img-responsive"/>');
+                    $("div#originalImage").html('<img src="data:image/png;base64,' + data.image + '" class="img-responsive"/>');
                     $("div#newImgTitle").hide();
                     $("div#newImage").hide();
                     $("div#sba").show();
                 },
-                function(){});
+                function(msg){
+                    $("div#errorImg").show();
+                    $("strong#errorImgMessage").text(msg);
+                });
     });
 }
 

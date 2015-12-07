@@ -1,6 +1,5 @@
 package actors
 
-import akka.actor.Status.Success
 import akka.actor.{PoisonPill, Actor, ActorLogging, Cancellable}
 import akka.pattern.pipe
 import com.dvgodoy.spark.benford.util._
@@ -83,29 +82,27 @@ class BenfordActor extends Actor with ActorLogging {
     case srvData(filePath: String) => {
       val originalSender = sender
       data = BenfordCommons.loadData(filePath)
-      val result: Or[JsValue, Every[ErrorMessage]] = data match {
+      val result: JsValue = data match {
         case Good(dbl) => {
           val numLevels = data.get.levels.keys.size
           dataStatsRDD = new Array[DataStatsMsg](numLevels)
           sampleRDD = new Array[StatsCIByLevelMsg](numLevels)
           benfordRDD = new Array[StatsCIByLevelMsg](numLevels)
           resultsRDD = new Array[ResultsByLevelMsg](numLevels)
-          Good(Json.toJson(self.path.name))
+          Json.obj("job" -> Json.toJson(self.path.name))
         }
-        case Bad(e) => Bad(e)
+        case Bad(e) => Json.obj("error" -> Json.toJson(e.head))
       }
-      //originalSender ! Success(result)
       Future(result) pipeTo originalSender
     }
     case srvCalc(numSamples: Int) => {
       val originalSender = sender
       numberSamples = numSamples
       basicBoot = BenfordCommons.calcBasicBoot(data, numSamples)
-      val result: Or[JsValue, Every[ErrorMessage]] = basicBoot match {
-        case Good(bb) => Good(Json.toJson("ok"))
-        case Bad(e) => Bad(e)
+      val result: JsValue = basicBoot match {
+        case Good(s) => Json.toJson("")
+        case Bad(e) => Json.obj("error" -> Json.toJson(e.head))
       }
-      //originalSender ! Success(result)
       Future(result) pipeTo originalSender
     }
     case srvNumSamples() => {

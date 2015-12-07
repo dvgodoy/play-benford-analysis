@@ -6,15 +6,21 @@ import akka.pattern.ask
 import akka.util.Timeout
 import java.io.{ByteArrayOutputStream, File}
 import javax.imageio.ImageIO
-import org.scalactic._
 import models.{ImageCommons, SparkCommons}
 import models.ImageService._
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.json.{JsUndefined, JsDefined, JsValue, Json}
 import play.api.mvc._
 
 import scala.concurrent.Future
 
 class ImageSBA extends Controller {
+
+  def processResult(result: JsValue, error: Status, session: Session): Result = {
+    (result \ "error") match {
+      case msg: JsDefined => error(result).withSession(session)
+      case res: JsUndefined => Ok(result).withSession(session)
+    }
+  }
 
   def imgUpload = Action(parse.multipartFormData) { request =>
     val id = ImageCommons.createJob
@@ -24,10 +30,7 @@ class ImageSBA extends Controller {
       if (SparkCommons.hadoop) SparkCommons.copyToHdfs(SparkCommons.tmpFolder + "/", id + ".png")
       Ok("").withSession(request.session + ("jobImg", id) + ("filePathImg", if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + filePath else filePath))
     }.getOrElse {
-      //Redirect(routes.Application.root).flashing(
-      //  "error" -> "Missing file"
-      //)
-      NotFound("")
+      NotFound("Error: There was a problem uploading your file. Please try again.")
     }
   }
 
@@ -43,11 +46,8 @@ class ImageSBA extends Controller {
     ImageIO.write(result, "png", baos)
     implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
-      img <- ask(imageActor, srvDirect(baos)).mapTo[Or[JsValue, One[ErrorMessage]]]
-    } yield img match {
-        case Good(s) => Ok(Json.toJson(s)).withSession(request.session + ("jobImg", id))
-        case Bad(e) =>  NotAcceptable(Json.obj("error" -> Json.toJson(e.head))).withSession(request.session + ("jobImg", id))
-      }
+      img <- ask(imageActor, srvDirect(baos)).mapTo[JsValue]
+    } yield processResult(img, NotAcceptable, request.session + ("jobImg", id))
     res
   }
 
@@ -72,8 +72,8 @@ class ImageSBA extends Controller {
     val imageActor = ImageCommons.getJob(id)
     implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
-      res <- ask(imageActor, srvData(filePath)).mapTo[String]
-    } yield Ok(Json.toJson(res)).withSession(request.session + ("jobImg", id))
+      res <- ask(imageActor, srvData(filePath)).mapTo[JsValue]
+    } yield processResult(res, NotAcceptable, request.session + ("jobImg", id))
     res
   }
 
@@ -82,13 +82,13 @@ class ImageSBA extends Controller {
     calculate(id, windowSize).apply(request)
   }
 
-  def calculate(id: String, windowSize: Int) = Action.async {
+  def calculate(id: String, windowSize: Int) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val imageActor = ImageCommons.getJob(id)
     implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
-      res <- ask(imageActor, srvCalc(windowSize)).mapTo[String]
-    } yield Ok(Json.toJson(res))
+      res <- ask(imageActor, srvCalc(windowSize)).mapTo[JsValue]
+    } yield processResult(res, BadRequest, request.session + ("jobImg", id))
     res
   }
 
@@ -97,13 +97,13 @@ class ImageSBA extends Controller {
     getImage(id).apply(request)
   }
 
-  def getImage(id: String) = Action.async {
+  def getImage(id: String) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val imageActor = ImageCommons.getJob(id)
     implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
-      img <- ask(imageActor, srvImage()).mapTo[String]
-    } yield Ok(img)
+      img <- ask(imageActor, srvImage()).mapTo[JsValue]
+    } yield processResult(img, BadRequest, request.session + ("jobImg", id))
     res
   }
 
@@ -112,17 +112,13 @@ class ImageSBA extends Controller {
     getSBAImage(id, threshold, whiteBackground).apply(request)
   }
 
-  def getSBAImage(id: String, threshold: Double, whiteBackground: Int) = Action.async {
+  def getSBAImage(id: String, threshold: Double, whiteBackground: Int) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val imageActor = ImageCommons.getJob(id)
     implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
-      img <- ask(imageActor, srvSBAImage(threshold, whiteBackground == 1)).mapTo[String]
-    } yield Ok(img)
-      /*Ok.sendFile(
-        content = new java.io.File(img),
-        inline = true
-      )*/
+      img <- ask(imageActor, srvSBAImage(threshold, whiteBackground == 1)).mapTo[JsValue]
+    } yield processResult(img, BadRequest, request.session + ("jobImg", id))
     res
   }
 

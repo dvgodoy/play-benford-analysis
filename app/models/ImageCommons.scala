@@ -19,17 +19,17 @@ object ImageCommons {
     system.actorOf(Props[ImageActor], name = uuid)
     uuid
   }
-  def loadData(baos: java.io.ByteArrayOutputStream): Or[SBAImageData, One[ErrorMessage]] = {
+  def loadData(baos: java.io.ByteArrayOutputStream): SBAImageDataMsg = {
     loadDirect(baos)
   }
-  def loadData(filePath: String) = {
+  def loadData(filePath: String): SBAImageDataMsg = {
     loadImage(filePath)
   }
-  def calcSBA(imageData: SBAImageData, wSize: Int = 15)(implicit jobId: JobId): SBAData = {
+  def calcSBA(imageData: SBAImageDataMsg, wSize: Int = 15)(implicit jobId: JobId): SBADataMsg = {
     SparkCommons.sc.setJobGroup(jobId.id, jobId.id)
     performSBA(SparkCommons.sc, imageData, wSize)(jobId)
   }
-  def getImage(sbaData: SBAData, threshold: Double, whiteBackground: Boolean = true): String = {
+  def getImage(sbaData: SBADataMsg, threshold: Double, whiteBackground: Boolean = true): SBAEncodedMsg = {
     getSBAImage(sbaData, threshold, whiteBackground)
   }
 }
