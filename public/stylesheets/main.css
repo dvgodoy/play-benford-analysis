@@ -5,7 +5,7 @@
 	color: #000;
 	background-color: orange !important;
 }
-.navbar-inverse .navbar-nav > li > a#linkAccounting:focus, a#linkImage:focus, a#linkHome:focus, a#linkContact:focus, .navbar-inverse .navbar-nav > li > a#linkAccounting:hover, a#linkImage:hover, a#linkHome:hover, a#linkContact:hover {
+.navbar-inverse .navbar-nav > li > a#linkDescription:focus, a#linkAccounting:focus, a#linkImage:focus, a#linkHome:focus, a#linkContact:focus, .navbar-inverse .navbar-nav > li > a#linkDescription:hover, a#linkAccounting:hover, a#linkImage:hover, a#linkHome:hover, a#linkContact:hover {
 	color: orange;
 	background-color: #000;
 }
@@ -25,4 +25,7 @@ footer a {
 }
 .container#main {
 	padding: 15px 0px 50px 0px;
+}
+.row#home, #accounting, #image, .row#description {
+	padding: 70px 0px 0px 0px;
 }

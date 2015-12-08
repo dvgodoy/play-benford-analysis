@@ -193,7 +193,8 @@ var imageSBA = function(){
     $(function(){
         get_json_buffer("/api/SBA/"+$("#wSizeSlider").slider("value"),
                 function(){
-                    imageOriginal();
+                    if ($("div#originalImage").html() == "") imageOriginal();
+                    $("div#newImage").html("");
                     $("div#show").show();
                 },
                 function(msg){
@@ -206,9 +207,9 @@ var imageSBA = function(){
 var imageOriginal = function(){
     $("div#errorImg").hide();
     $(function(){
-        $("div#sba").hide();
-        $("div#originalImage").html("");
-        $("div#newImage").html("");
+        //$("div#sba").hide();
+        //$("div#originalImage").html("");
+        //$("div#newImage").html("");
         get_json_buffer("/api/Image",
                 function(data){
                     $("div#originalImage").html('<img src="data:image/png;base64,' + data.image + '" class="img-responsive"/>');
@@ -342,6 +343,7 @@ var showResult = function(id, digits){
 
 var showCurrentDiv = function(divName) {
     $(function(){
+        $("div#home").toggle(false);
         $("div#description").toggle(false);
         $("div#accounting").toggle(false);
         $("div#image").toggle(false);
@@ -788,10 +790,11 @@ $(function(){
     });
     $("#wSize").val($("#wSizeSlider").slider("value"));
 
-    $("a#linkHome").click(function(){showCurrentDiv("description");});
-    $("a#linkAccounting").click(function(e){e.preventDefault();showCurrentDiv("accounting");});
-    $("a#linkImage").click(function(){showCurrentDiv("image");});
-    showCurrentDiv("description");
+    $(".linkHome").click(function(){showCurrentDiv("home");});
+    $(".linkAccounting").click(function(e){e.preventDefault();showCurrentDiv("accounting");});
+    $(".linkImage").click(function(){showCurrentDiv("image");});
+    $(".linkDescription").click(function(){showCurrentDiv("description");});
+    showCurrentDiv("home");
 
    $('body').on('click', '.btn-group button', function (e) {
        $(this).addClass('active');
@@ -878,6 +881,8 @@ $(function(){
             processData: false
         }).done(function(data){
             $("div#process").show();
+            $("div#sba").hide();
+            $("div#originalImage").html("");
             //imageOriginal();
         });
         e.preventDefault();

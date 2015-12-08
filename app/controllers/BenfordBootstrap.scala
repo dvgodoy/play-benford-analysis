@@ -13,6 +13,7 @@ import play.api.mvc._
 import scala.concurrent.Future
 
 class BenfordBootstrap extends Controller {
+  implicit val timeout = Timeout(30, SECONDS)
 
   def processResult(result: JsValue, error: Status, session: Session): Result = {
     (result \ "error") match {
@@ -53,7 +54,6 @@ class BenfordBootstrap extends Controller {
   def loadData(id: String, filePath: String) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val benfordActor = BenfordCommons.getJob(id)
-    implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
       rsp <- ask(benfordActor, srvData(filePath)).mapTo[JsValue]
     } yield processResult(rsp, NotAcceptable, request.session + ("job", id))
@@ -68,7 +68,6 @@ class BenfordBootstrap extends Controller {
   def getGroups(id: String) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val benfordActor = BenfordCommons.getJob(id)
-    implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
       f <- ask(benfordActor, srvGroups()).mapTo[JsValue]
     } yield processResult(f, BadRequest, request.session)
@@ -83,7 +82,6 @@ class BenfordBootstrap extends Controller {
   def calculate(id: String, numSamples: Int) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val benfordActor = BenfordCommons.getJob(id)
-    implicit val timeout = Timeout(1, MINUTES)
     val res: Future[Result] = for {
       rsp <- ask(benfordActor, srvCalc(numSamples)).mapTo[JsValue]
     } yield processResult(rsp, BadRequest, request.session)
@@ -98,7 +96,6 @@ class BenfordBootstrap extends Controller {
   def getCIsByGroup(id: String, groupId: Int) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val benfordActor = BenfordCommons.getJob(id)
-    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
       ci <- ask(benfordActor, srvCIsByGroupId(groupId)).mapTo[JsValue]
     } yield processResult(ci, BadRequest, request.session)
@@ -113,7 +110,6 @@ class BenfordBootstrap extends Controller {
   def getBenfordCIsByGroup(id: String, groupId: Int) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val benfordActor = BenfordCommons.getJob(id)
-    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
       ci <- ask(benfordActor, srvBenfordCIsByGroupId(groupId)).mapTo[JsValue]
     } yield processResult(ci, BadRequest, request.session)
@@ -128,7 +124,6 @@ class BenfordBootstrap extends Controller {
   def getResultsByGroup(id: String, groupId: Int) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val benfordActor = BenfordCommons.getJob(id)
-    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
       r <- ask(benfordActor, srvResultsByGroupId(groupId)).mapTo[JsValue]
     } yield processResult(r, BadRequest, request.session)
@@ -143,7 +138,6 @@ class BenfordBootstrap extends Controller {
   def getFreqByGroup(id: String, groupId: Int) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val benfordActor = BenfordCommons.getJob(id)
-    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
       f <- ask(benfordActor, srvFrequenciesByGroupId(groupId)).mapTo[JsValue]
     } yield processResult(f, BadRequest, request.session)
@@ -174,7 +168,6 @@ class BenfordBootstrap extends Controller {
   def getTestsByGroup(id: String, groupId: Int) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val benfordActor = BenfordCommons.getJob(id)
-    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
       f <- ask(benfordActor, srvTestsByGroupId(groupId)).mapTo[JsValue]
     } yield processResult(f, BadRequest, request.session)
@@ -194,7 +187,6 @@ class BenfordBootstrap extends Controller {
   def getCIsByLevel(id: String, level: Int) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val benfordActor = BenfordCommons.getJob(id)
-    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
       ci <- ask(benfordActor, srvCIsByLevel(level)).mapTo[JsValue]
     } yield processResult(ci, BadRequest, request.session)
@@ -209,7 +201,6 @@ class BenfordBootstrap extends Controller {
   def getBenfordCIsByLevel(id: String, level: Int) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val benfordActor = BenfordCommons.getJob(id)
-    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
       ci <- ask(benfordActor, srvBenfordCIsByLevel(level)).mapTo[JsValue]
     } yield processResult(ci, BadRequest, request.session)
@@ -224,7 +215,6 @@ class BenfordBootstrap extends Controller {
   def getResultsByLevel(id: String, level: Int) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val benfordActor = BenfordCommons.getJob(id)
-    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
       r <- ask(benfordActor, srvResultsByLevel(level)).mapTo[JsValue]
     } yield processResult(r, BadRequest, request.session)
@@ -239,7 +229,6 @@ class BenfordBootstrap extends Controller {
   def getFreqByLevel(id: String, level: Int) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val benfordActor = BenfordCommons.getJob(id)
-    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
       f <- ask(benfordActor, srvFrequenciesByLevel(level)).mapTo[JsValue]
     } yield processResult(f, BadRequest, request.session)
@@ -254,7 +243,6 @@ class BenfordBootstrap extends Controller {
   def getTestsByLevel(id: String, level: Int) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val benfordActor = BenfordCommons.getJob(id)
-    implicit val timeout = Timeout(15, MINUTES)
     val res: Future[Result] = for {
       f <- ask(benfordActor, srvTestsByLevel(level)).mapTo[JsValue]
     } yield processResult(f, BadRequest, request.session)

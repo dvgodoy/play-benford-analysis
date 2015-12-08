@@ -9,7 +9,6 @@ import com.dvgodoy.spark.benford.util.JobId
 import com.dvgodoy.spark.benford.image.SBA._
 
 object ImageCommons {
-  implicit val timeout = Timeout(30, SECONDS)
   val system = ActorSystem("SBA")
 
   def getJob(uuid: String): ActorSelection = {
