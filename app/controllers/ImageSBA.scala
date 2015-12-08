@@ -44,7 +44,7 @@ class ImageSBA extends Controller {
     val result = ImageIO.read(imgData.ref.file)
     val baos = new ByteArrayOutputStream()
     ImageIO.write(result, "png", baos)
-    implicit val timeout = Timeout(1, MINUTES)
+    implicit val timeout = Timeout(30, SECONDS)
     val res: Future[Result] = for {
       img <- ask(imageActor, srvDirect(baos)).mapTo[JsValue]
     } yield processResult(img, NotAcceptable, request.session + ("jobImg", id))
@@ -70,7 +70,7 @@ class ImageSBA extends Controller {
   def loadImage(id: String, filePath: String) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val imageActor = ImageCommons.getJob(id)
-    implicit val timeout = Timeout(1, MINUTES)
+    implicit val timeout = Timeout(30, SECONDS)
     val res: Future[Result] = for {
       res <- ask(imageActor, srvData(filePath)).mapTo[JsValue]
     } yield processResult(res, NotAcceptable, request.session + ("jobImg", id))
@@ -85,7 +85,7 @@ class ImageSBA extends Controller {
   def calculate(id: String, windowSize: Int) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val imageActor = ImageCommons.getJob(id)
-    implicit val timeout = Timeout(1, MINUTES)
+    implicit val timeout = Timeout(30, SECONDS)
     val res: Future[Result] = for {
       res <- ask(imageActor, srvCalc(windowSize)).mapTo[JsValue]
     } yield processResult(res, BadRequest, request.session + ("jobImg", id))
@@ -100,7 +100,7 @@ class ImageSBA extends Controller {
   def getImage(id: String) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val imageActor = ImageCommons.getJob(id)
-    implicit val timeout = Timeout(15, MINUTES)
+    implicit val timeout = Timeout(30, SECONDS)
     val res: Future[Result] = for {
       img <- ask(imageActor, srvImage()).mapTo[JsValue]
     } yield processResult(img, BadRequest, request.session + ("jobImg", id))
@@ -115,7 +115,7 @@ class ImageSBA extends Controller {
   def getSBAImage(id: String, threshold: Double, whiteBackground: Int) = Action.async { request =>
     import scala.concurrent.ExecutionContext.Implicits.global
     val imageActor = ImageCommons.getJob(id)
-    implicit val timeout = Timeout(15, MINUTES)
+    implicit val timeout = Timeout(30, SECONDS)
     val res: Future[Result] = for {
       img <- ask(imageActor, srvSBAImage(threshold, whiteBackground == 1)).mapTo[JsValue]
     } yield processResult(img, BadRequest, request.session + ("jobImg", id))

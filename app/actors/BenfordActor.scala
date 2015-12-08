@@ -1,6 +1,8 @@
 package actors
 
-import akka.actor.{PoisonPill, Actor, ActorLogging, Cancellable}
+import actors.ActorBuffer.Finished
+import akka.ActorTimer
+import akka.actor.{Actor, ActorLogging}
 import akka.pattern.pipe
 import com.dvgodoy.spark.benford.util._
 import models.BenfordCommons
@@ -10,25 +12,9 @@ import play.api.libs.json.{JsValue, Json}
 
 import scala.concurrent.Future
 
-class BenfordActor extends Actor with ActorLogging {
+class BenfordActor extends Actor with ActorLogging with ActorTimer {
 
   import context.dispatcher
-  /*private val SYNC_ALL_ORDERS = "SYNC_ALL_ORDERS"
-  private var scheduler: Cancellable = _
-
-  override def preStart():Unit = {
-    import scala.concurrent.duration._
-    scheduler = context.system.scheduler.schedule(
-      initialDelay = 10 seconds,
-      interval = 15 minutes,
-      receiver = self,
-      message = PoisonPill
-    )
-  }
-
-  override def postStop(): Unit = {
-    scheduler.cancel()
-  }*/
 
   private var data: DataByLevelMsg = _
   private var numberSamples: Int = 25000
@@ -70,15 +56,6 @@ class BenfordActor extends Actor with ActorLogging {
   }
 
   def receive = {
-    // if it does any calculation, prevents the actor to receive the poison pill it sent to itself
-    // scheduler.cancel()
-    /*case SYNC_ALL_ORDERS =>
-      try {
-        // synchronize all the orders
-      } catch {
-        case t: Throwable =>
-        // report errors
-      }*/
     case srvData(filePath: String) => {
       val originalSender = sender
       data = BenfordCommons.loadData(filePath)
@@ -93,7 +70,7 @@ class BenfordActor extends Actor with ActorLogging {
         }
         case Bad(e) => Json.obj("error" -> Json.toJson(e.head))
       }
-      Future(result) pipeTo originalSender
+      Future(result) map (Finished(srvData(filePath), _)) pipeTo originalSender
     }
     case srvCalc(numSamples: Int) => {
       val originalSender = sender
@@ -103,52 +80,52 @@ class BenfordActor extends Actor with ActorLogging {
         case Good(s) => Json.toJson("")
         case Bad(e) => Json.obj("error" -> Json.toJson(e.head))
       }
-      Future(result) pipeTo originalSender
+      Future(result) map (Finished(srvCalc(numSamples), _)) pipeTo originalSender
     }
     case srvNumSamples() => {
       val originalSender = sender
-      Future(numberSamples) pipeTo originalSender
+      Future(numberSamples)  map (Finished(srvNumSamples(), _)) pipeTo originalSender
     }
     case srvCIsByGroupId(groupId: Int) => {
       val originalSender = sender
-      Future(BenfordCommons.getCIsByGroupId(calcSample(groupId))) pipeTo originalSender
+      Future(BenfordCommons.getCIsByGroupId(calcSample(groupId))) map (Finished(srvCIsByGroupId(groupId), _)) pipeTo originalSender
     }
     case srvCIsByLevel(level: Int) => {
       // to be implemented
     }
     case srvBenfordCIsByGroupId(groupId: Int) => {
       val originalSender = sender
-      Future(BenfordCommons.getCIsByGroupId(calcBenford(groupId))) pipeTo originalSender
+      Future(BenfordCommons.getCIsByGroupId(calcBenford(groupId))) map (Finished(srvBenfordCIsByGroupId(groupId), _)) pipeTo originalSender
     }
     case srvBenfordCIsByLevel(level: Int) => {
       // to be implemented
     }
     case srvResultsByGroupId(groupId: Int) => {
       val originalSender = sender
-      Future(BenfordCommons.getResultsByGroupId(calcResults(groupId))) pipeTo originalSender
+      Future(BenfordCommons.getResultsByGroupId(calcResults(groupId))) map (Finished(srvResultsByGroupId(groupId), _)) pipeTo originalSender
     }
     case srvResultsByLevel(level: Int) => {
       // to be implemented
     }
     case srvFrequenciesByGroupId(groupId: Int) => {
       val originalSender = sender
-      Future(BenfordCommons.getFrequenciesByGroupId(data, groupId)) pipeTo originalSender
+      Future(BenfordCommons.getFrequenciesByGroupId(data, groupId)) map (Finished(srvFrequenciesByGroupId(groupId), _)) pipeTo originalSender
     }
     case srvFrequenciesByLevel(level: Int) => {
-      val originalSender = sender
-      Future(BenfordCommons.getFrequenciesByLevel(data, level)) pipeTo originalSender
+      //val originalSender = sender
+      //Future(BenfordCommons.getFrequenciesByLevel(data, level)) pipeTo originalSender
     }
     case srvGroups() => {
       val originalSender = sender
-      Future(BenfordCommons.getGroups(data)) pipeTo originalSender
+      Future(BenfordCommons.getGroups(data)) map (Finished(srvGroups(), _)) pipeTo originalSender
     }
     case srvTestsByGroupId(groupId: Int) => {
       val originalSender = sender
-      Future(BenfordCommons.getTestsByGroupId(data, groupId)) pipeTo originalSender
+      Future(BenfordCommons.getTestsByGroupId(data, groupId)) map (Finished(srvTestsByGroupId(groupId), _)) pipeTo originalSender
     }
     case srvTestsByLevel(level: Int) => {
-      val originalSender = sender
-      Future(BenfordCommons.getTestsByLevel(data, level)) pipeTo originalSender
+      //val originalSender = sender
+      //Future(BenfordCommons.getTestsByLevel(data, level)) pipeTo originalSender
     }
   }
 

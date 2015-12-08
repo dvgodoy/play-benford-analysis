@@ -19,10 +19,43 @@ var get_json = function(url, funcSuccess, funcError) {
     });
 };
 
+var get_json_buffer = function(url, funcSuccess, funcError, ftimer) {
+    $(function(){
+        var count = 0;
+        // starts the service and probe every 0.25 second (up to 15 minutes) for the status of the service
+        // if the JSON returned is a "status", either "started" or "processing", keep going
+        // until receives a JSON response or error
+        ftimer = setInterval(function(){
+            var jqXHR = $.get(url, function(data){}, "json");
+            jqXHR.done(function( data, textStatus, jqXHR){
+                console.log(url + " - " + data + " - " + count);
+                if (typeof data == 'object') {
+                     if (!data.hasOwnProperty('status')) {
+                        clearInterval(ftimer);
+                        funcSuccess(data);
+                     };
+                } else {
+                    clearInterval(ftimer);
+                    funcSuccess(data);
+                };
+            });
+            jqXHR.fail(function(jqXHR, textStatus, errorThrown){
+                clearInterval(ftimer);
+                funcError($.parseJSON(jqXHR.responseText).error);
+            });
+            count = count + 1;
+            if (count >= 900) {
+                if (exit == 0)  funcError("Time out: 900 seconds.");
+                clearInterval(ftimer);
+            };
+        }, 500);
+    });
+};
+
 var accountingGroups = function(){
     $("div#errorAcc").hide();
     $(function(){
-        get_json("/api/Groups",
+        get_json_buffer("/api/Groups",
                 addGroups,
                 function(msg){
                     $("div#errorAcc").show();
@@ -34,7 +67,7 @@ var accountingGroups = function(){
 var accountingFrequencies = function(id){
     $("div#errorAcc").hide();
     $(function(){
-        get_json("/api/FreqByGroup/"+id,
+        get_json_buffer("/api/FreqByGroup/"+id,
                 function(data){
                     addFrequencies(id, data);
                 },
@@ -48,7 +81,7 @@ var accountingFrequencies = function(id){
 var accountingTests = function(id){
     $("div#errorAcc").hide();
     $(function(){
-        get_json("/api/TestsByGroup/"+id,
+        get_json_buffer("/api/TestsByGroup/"+id,
                 function(data){
                     addTests(id, data);
                 },
@@ -62,7 +95,7 @@ var accountingTests = function(id){
 var accountingLoad = function(){
     $("div#errorAcc").hide();
     $(function(){
-        get_json("/api/acc/Load",
+        get_json_buffer("/api/acc/Load",
                 function(){
                     accountingGroups();
                     accountingCalc(1000);
@@ -77,7 +110,7 @@ var accountingLoad = function(){
 var accountingCalc = function(numSamples){
     $("div#errorAcc").hide();
     $(function(){
-        get_json("/api/Calc/"+numSamples,
+        get_json_buffer("/api/Calc/"+numSamples,
                 function(){},
                 function(msg){
                     $("div#errorAcc").show();
@@ -89,7 +122,7 @@ var accountingCalc = function(numSamples){
 var accountingCIs = function(id){
     $("div#errorAcc").hide();
     $(function(){
-        get_json("/api/CIsByGroup/"+id,
+        get_json_buffer("/api/CIsByGroup/"+id,
                 function(data){
                     preProcessCIsByGroup(data);
                     showResult(id,"d1d2");
@@ -98,7 +131,7 @@ var accountingCIs = function(id){
                     $("div#errorAcc").show();
                     $("strong#errorAccMessage").text(msg);
                 });
-        get_json("/api/BenfCIsByGroup/"+id,
+        get_json_buffer("/api/BenfCIsByGroup/"+id,
                 function(data){
                     preProcessBenfCIsByGroup(data);
                     showResult(id,"d1d2");
@@ -113,7 +146,7 @@ var accountingCIs = function(id){
 var accountingResults = function(id){
     $("div#errorAcc").hide();
     $(function(){
-        get_json("/api/ResultsByGroup/"+id,
+        get_json_buffer("/api/ResultsByGroup/"+id,
                 function(data){
                     processResultsByGroup(data);
                     showResult(id,"d1d2");
@@ -128,7 +161,7 @@ var accountingResults = function(id){
 var accountingExactParams = function(){
     $("div#errorAcc").hide();
     $(function(){
-        get_json("/api/ExactParams",
+        get_json_buffer("/api/ExactParams",
                 function(data){
                     processExact(data);
                     showResult(id,"d1d2");
@@ -143,9 +176,10 @@ var accountingExactParams = function(){
 var imageResult = function(threshold, whiteBg){
     $("div#errorImg").hide();
     $(function(){
-        get_json("/api/NewImage/"+threshold+"/"+whiteBg,
+        get_json_buffer("/api/NewImage/"+threshold+"/"+whiteBg,
                 function(data){
                     $("div#newImage").html('<img src="data:image/png;base64,' + data.image + '" class="img-responsive"/>');
+                    $("div#sba").show();
                 },
                 function(msg){
                     $("div#errorImg").show();
@@ -157,10 +191,10 @@ var imageResult = function(threshold, whiteBg){
 var imageSBA = function(){
     $("div#errorImg").hide();
     $(function(){
-        get_json("/api/SBA/"+$("#wSizeSlider").slider("value"),
+        get_json_buffer("/api/SBA/"+$("#wSizeSlider").slider("value"),
                 function(){
+                    imageOriginal();
                     $("div#show").show();
-                    imageLoad();
                 },
                 function(msg){
                     $("div#errorImg").show();
@@ -175,7 +209,7 @@ var imageOriginal = function(){
         $("div#sba").hide();
         $("div#originalImage").html("");
         $("div#newImage").html("");
-        get_json("/api/Image",
+        get_json_buffer("/api/Image",
                 function(data){
                     $("div#originalImage").html('<img src="data:image/png;base64,' + data.image + '" class="img-responsive"/>');
                     $("div#newImgTitle").hide();
@@ -192,14 +226,10 @@ var imageOriginal = function(){
 var imageLoad = function(){
     $(function(){
         $("div#newImage").html("");
-        get_json("/api/Image",
-                function(data){
-                    $("div#newImgTitle").show();
-                    $("div#newImage").show();
-                    imageResult($("#slider").slider("value") / 100.0,$("input#white").is(':checked') ? 1 : 0);
-                },
-                function(){});
-        });
+        $("div#newImgTitle").show();
+        $("div#newImage").show();
+        imageResult($("#slider").slider("value") / 100.0,$("input#white").is(':checked') ? 1 : 0);
+    });
 };
 
 
@@ -848,7 +878,7 @@ $(function(){
             processData: false
         }).done(function(data){
             $("div#process").show();
-            imageOriginal();
+            //imageOriginal();
         });
         e.preventDefault();
    });

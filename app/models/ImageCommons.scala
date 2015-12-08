@@ -1,13 +1,15 @@
 package models
 
-import actors.ImageActor
-import akka.actor.{Props, ActorSelection, ActorSystem}
+import java.util.concurrent.TimeUnit._
+
+import actors.ImageBufferActor
+import akka.actor.{ActorRef, Props, ActorSelection, ActorSystem}
+import akka.util.Timeout
 import com.dvgodoy.spark.benford.util.JobId
 import com.dvgodoy.spark.benford.image.SBA._
 
-import org.scalactic._
-
 object ImageCommons {
+  implicit val timeout = Timeout(30, SECONDS)
   val system = ActorSystem("SBA")
 
   def getJob(uuid: String): ActorSelection = {
@@ -16,7 +18,7 @@ object ImageCommons {
   }
   def createJob: String =  {
     val uuid = java.util.UUID.randomUUID().toString
-    system.actorOf(Props[ImageActor], name = uuid)
+    system.actorOf(Props[ImageBufferActor], name = uuid)
     uuid
   }
   def loadData(baos: java.io.ByteArrayOutputStream): SBAImageDataMsg = {

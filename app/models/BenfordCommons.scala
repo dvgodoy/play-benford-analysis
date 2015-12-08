@@ -1,10 +1,9 @@
 package models
 
-import actors.BenfordActor
+import actors.BenfordBufferActor
 import akka.actor.{Props, ActorSelection, ActorSystem}
 import com.dvgodoy.spark.benford.distributions.{Benford, Bootstrap}
 import com.dvgodoy.spark.benford.util._
-import org.apache.spark.rdd.RDD
 import play.api.libs.json._
 
 object BenfordCommons {
@@ -21,7 +20,7 @@ object BenfordCommons {
   }
   def createJob: String =  {
     val uuid = java.util.UUID.randomUUID().toString
-    system.actorOf(Props[BenfordActor], name = uuid)
+    system.actorOf(Props[BenfordBufferActor], name = uuid)
     uuid
   }
   def loadData(filePath: String)(implicit jobId: JobId): DataByLevelMsg = {
