@@ -8,7 +8,7 @@
             <p>
                 <h4>It is really easy to process an image! All you have to do is:</h4>
                 <ul>
-                    <li>submit a gray-scale image;</li>
+                    <li>submit either an image URL or file;</li>
                     <li>choose a window size to be used in the 2D-Scanning Benford Analysis (2D-SBA);<br>
                         (lower values yield better results for small images)</li>
                     <li>choose the percentage of pixels to be discarded - the remaining pixels will contain edge information;<br>
@@ -26,10 +26,27 @@
         <strong id="errorImgMessage">Error!</strong>
     </div>
 
-    <p></p>
+    <br>
 
     <div class="container">
-        <div class="row">
+        <div class="row col-lg-12">
+            <form id="uploadImgURLForm" action="/api/img/URL" method="post" role="form" class="form-horizontal">
+                <label class="control-label col-lg-1" for="imgURL">URL: </label>
+                <div class="col-lg-8">
+                    <input type="text" class="form-control" id="imgURL" name="imgURL">
+                <span class="help-block">
+                    http://i.stack.imgur.com/B2DBy.jpg <a id="imgExample1">Use this puppy image!</a>
+                    <br>https://s3-us-west-2.amazonaws.com/spark-benford/chess.png <a id="imgExample2">Use this chessboard image!</a>
+                    <br>http://cdn.phys.org/newman/gfx/news/hires/2009/1-acrystalball.jpg <a id="imgExample3">Use this MRI image!</a>
+                </span>
+                </div>
+                <div class="col-lg-3">
+                    <button type="submit" class="btn btn-warning">Submit</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="row col-lg-12">
             <form id="uploadImgForm" action="/api/img/Direct" method="post" enctype="multipart/form-data" role="form">
                 <div class="col-lg-9">
                     <div class="input-group">
@@ -41,7 +58,7 @@
                         <input type="text" class="form-control" readonly>
                     </div>
                 <span class="help-block">
-                    Select your image
+                    Upload your image
                 </span>
                 </div>
                 <div class="col-lg-3">

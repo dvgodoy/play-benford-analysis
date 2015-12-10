@@ -12,6 +12,8 @@ import play.api.libs.json.{JsUndefined, JsDefined, JsValue, Json}
 import play.api.mvc._
 
 import scala.concurrent.Future
+import java.net.URL
+import java.io.File
 
 class ImageSBA extends Controller {
   implicit val timeout = Timeout(30, SECONDS)
@@ -45,6 +47,23 @@ class ImageSBA extends Controller {
     val result = ImageIO.read(imgData.ref.file)
     val baos = new ByteArrayOutputStream()
     ImageIO.write(result, "png", baos)
+    val res: Future[Result] = for {
+      img <- ask(imageActor, srvDirect(baos)).mapTo[JsValue]
+    } yield processResult(img, NotAcceptable, request.session + ("jobImg", id))
+    res
+  }
+
+  def loadImageURL = Action.async(parse.multipartFormData) { request =>
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val id = ImageCommons.createJob
+    val imageActor = ImageCommons.getJob(id)
+
+    val url = request.body.dataParts.get("imgURL").get.head
+    val filePath = SparkCommons.tmpFolder + "/" + id + ".img"
+
+    val baos = new ByteArrayOutputStream()
+    ImageIO.write(ImageIO.read(new URL(url)), "png", baos)
     val res: Future[Result] = for {
       img <- ask(imageActor, srvDirect(baos)).mapTo[JsValue]
     } yield processResult(img, NotAcceptable, request.session + ("jobImg", id))

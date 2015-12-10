@@ -47,7 +47,22 @@
     <p></p>
 
     <div class="container">
-        <div class="row">
+        <div class="row col-lg-12">
+            <form id="uploadURLForm" action="/api/acc/URL" method="post" role="form" class="form-horizontal">
+                <label class="control-label col-lg-1" for="accURL">URL: </label>
+                <div class="col-lg-8">
+                    <input type="text" class="form-control" id="accURL" name="accURL">
+                <span class="help-block">
+                    https://s3-us-west-2.amazonaws.com/spark-benford/accounting_sample.csv <a id="accExample">Use this accounting example!</a>
+                </span>
+                </div>
+                <div class="col-lg-3">
+                    <button type="submit" class="btn btn-warning">Submit</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="row col-lg-12">
             <form id="uploadForm" action="/api/acc/Upload" method="post" enctype="multipart/form-data" role="form">
                 <div class="col-lg-9">
                     <div class="input-group">

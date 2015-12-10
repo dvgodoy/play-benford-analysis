@@ -28,7 +28,7 @@ var get_json_buffer = function(url, funcSuccess, funcError, ftimer) {
         ftimer = setInterval(function(){
             var jqXHR = $.get(url, function(data){}, "json");
             jqXHR.done(function( data, textStatus, jqXHR){
-                console.log(url + " - " + data + " - " + count);
+                //console.log(url + " - " + data + " - " + count);
                 if (typeof data == 'object') {
                      if (!data.hasOwnProperty('status')) {
                         clearInterval(ftimer);
@@ -70,6 +70,7 @@ var accountingFrequencies = function(id){
         get_json_buffer("/api/FreqByGroup/"+id,
                 function(data){
                     addFrequencies(id, data);
+                    accountingTests(id);
                 },
                 function(msg){
                     $("div#errorAcc").show();
@@ -125,7 +126,6 @@ var accountingCIs = function(id){
         get_json_buffer("/api/CIsByGroup/"+id,
                 function(data){
                     preProcessCIsByGroup(data);
-                    showResult(id,"d1d2");
                 },
                 function(msg){
                     $("div#errorAcc").show();
@@ -241,7 +241,6 @@ var groupButtons = function(id){
          $("<button type='button' class='btn btn-default col-lg-6'>").text("Freqs").click(function(){
             if ($("div#freq"+id+"_d1d2").html() == "") {
                 accountingFrequencies(id);
-                accountingTests(id);
                 $("tr#groupId"+id+"_freqs").show();
             } else {
                 $("tr#groupId"+id+"_freqs").toggle();
@@ -251,7 +250,6 @@ var groupButtons = function(id){
             if ($("div#results"+id).html() == "") {
                 if ($("div#freq"+id+"_d1d2").html() == "") {
                     accountingFrequencies(id);
-                    accountingTests(id);
                 };
                 accountingCIs(id);
                 accountingResults(id);
@@ -826,6 +824,45 @@ $(function(){
             success: function(data, textStatus, jqXHR){
             },
             error: function(jqXHR, textStatus, errorThrown){
+                $("div#errorAcc").show();
+                $("strong#errorAccMessage").text($.parseJSON(jqXHR.responseText).error);
+            },
+            complete: function(jqXHR,textStatus){
+            },
+            // Form data
+            data: formData,
+            //Options to tell jQuery not to process data or worry about content-type.
+            cache: false,
+            contentType: false,
+            processData: false
+        }).done(function(data){
+            $("div#errorAcc").hide();
+            $("strong#errorAccMessage").text("");
+            $("div#load").show();
+            $("div#results").show();
+        });
+        e.preventDefault();
+   });
+
+   $("form#uploadURLForm").submit(function(e) {
+        $("div#results").hide();
+        $("div#load").hide();
+
+        $("div#results").html("");
+        $("div#groups").html("");
+        $("div#frequencies").html("");
+        var formData = new FormData($(this)[0]);
+        $.ajax({
+            url: $(this).attr('action'),  //Server script to process data
+            type: 'POST',
+            //Ajax events
+            beforeSend:function(jqXHR, settings){
+            },
+            success: function(data, textStatus, jqXHR){
+            },
+            error: function(jqXHR, textStatus, errorThrown){
+                $("div#errorAcc").show();
+                $("strong#errorAccMessage").text($.parseJSON(jqXHR.responseText).error);
             },
             complete: function(jqXHR,textStatus){
             },
@@ -883,7 +920,41 @@ $(function(){
             $("div#process").show();
             $("div#sba").hide();
             $("div#originalImage").html("");
-            //imageOriginal();
+        });
+        e.preventDefault();
+   });
+
+   $("form#uploadImgURLForm").submit(function(e) {
+        $("div#process").hide();
+        $("div#show").hide();
+        $("div#sba").hide();
+        $("div#errorImg").hide();
+
+        var formData = new FormData($(this)[0]);
+        $.ajax({
+            url: $(this).attr('action'),  //Server script to process data
+            type: 'POST',
+            //Ajax events
+            beforeSend:function(jqXHR, settings){
+            },
+            success: function(data, textStatus, jqXHR){
+            },
+            error: function(jqXHR, textStatus, errorThrown){
+                $("div#errorImg").show();
+                $("strong#errorImgMessage").text($.parseJSON(jqXHR.responseText).error);
+            },
+            complete: function(jqXHR,textStatus){
+            },
+            // Form data
+            data: formData,
+            //Options to tell jQuery not to process data or worry about content-type.
+            cache: false,
+            contentType: false,
+            processData: false
+        }).done(function(data){
+            $("div#process").show();
+            $("div#sba").hide();
+            $("div#originalImage").html("");
         });
         e.preventDefault();
    });
@@ -896,7 +967,7 @@ $(document).on('change', '.btn-file :file', function() {
   input.trigger('fileselect', [numFiles, label]);
 });
 
-$(document).ready( function() {
+$(document).ready(function() {
     $('.btn-file :file').on('fileselect', function(event, numFiles, label) {
         var input = $(this).parents('.input-group').find(':text'),
             log = numFiles > 1 ? numFiles + ' files selected' : label;
@@ -906,6 +977,22 @@ $(document).ready( function() {
             if( log ) alert(log);
         }
     });
+});
+
+$("a#accExample").click(function(){
+    $("input#accURL").val("https://s3-us-west-2.amazonaws.com/spark-benford/accounting_sample.csv");
+});
+
+$("a#imgExample1").click(function(){
+    $("input#imgURL").val("http://i.stack.imgur.com/B2DBy.jpg");
+});
+
+$("a#imgExample2").click(function(){
+    $("input#imgURL").val("https://s3-us-west-2.amazonaws.com/spark-benford/chess.png");
+});
+
+$("a#imgExample3").click(function(){
+    $("input#imgURL").val("http://cdn.phys.org/newman/gfx/news/hires/2009/1-acrystalball.jpg");
 });
 
 var startInterval = function(size){

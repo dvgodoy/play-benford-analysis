@@ -6,11 +6,13 @@
 GET        /                                     controllers.Application.root
 
 POST       /api/acc/Upload                           controllers.BenfordBootstrap.accUpload
+POST       /api/acc/URL                              controllers.BenfordBootstrap.loadDataURL
 GET        /api/acc/Load                             controllers.BenfordBootstrap.loadDataSession
 GET        /api/acc/:job/Load                        controllers.BenfordBootstrap.loadDataUploaded(job: String)
 GET        /api/acc/Load/$filePath<[\w\W]+>          controllers.BenfordBootstrap.loadDataLocal(filePath: String)
 
 POST       /api/img/Direct                           controllers.ImageSBA.loadImageDirect
+POST       /api/img/URL                              controllers.ImageSBA.loadImageURL
 POST       /api/img/Upload                           controllers.ImageSBA.imgUpload
 GET        /api/img/Load                             controllers.ImageSBA.loadImageSession
 GET        /api/img/:job/Load                        controllers.ImageSBA.loadImageUploaded(job: String)

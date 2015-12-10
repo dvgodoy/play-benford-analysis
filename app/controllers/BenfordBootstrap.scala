@@ -11,9 +11,16 @@ import play.api.libs.json.{JsUndefined, JsDefined, JsValue, Json}
 import play.api.mvc._
 
 import scala.concurrent.Future
+import sys.process._
+import java.net.URL
+import java.io.File
 
 class BenfordBootstrap extends Controller {
   implicit val timeout = Timeout(30, SECONDS)
+
+  def fileDownloader(url: String, filename: String) = {
+    new URL(url) #> new File(filename) !!
+  }
 
   def processResult(result: JsValue, error: Status, session: Session): Result = {
     (result \ "error") match {
@@ -31,7 +38,20 @@ class BenfordBootstrap extends Controller {
       if (SparkCommons.hadoop) SparkCommons.copyToHdfs(SparkCommons.tmpFolder + "/", id + ".csv")
       Ok("").withSession(request.session + ("job", id) + ("filePath", if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + filePath else filePath))
     }.getOrElse {
-      NotFound("Error: There was a problem uploading your file. Please try again.")
+      NotFound(Json.obj("error" -> "Error: There was a problem uploading your file. Please try again."))
+    }
+  }
+
+  def loadDataURL = Action(parse.multipartFormData) { request =>
+    val id = BenfordCommons.createJob
+    request.body.dataParts.get("accURL").map { accData =>
+      val url = accData.head
+      val filePath = SparkCommons.tmpFolder + "/" + id + ".csv"
+      fileDownloader(url, filePath)
+      if (SparkCommons.hadoop) SparkCommons.copyToHdfs(SparkCommons.tmpFolder + "/", id + ".csv")
+      Ok("").withSession(request.session + ("job", id) + ("filePath", if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + filePath else filePath))
+    }.getOrElse{
+      NotFound(Json.obj("error" -> "Error: There was a problem uploading your file. Please try again."))
     }
   }
 
