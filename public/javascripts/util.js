@@ -55,7 +55,7 @@ var get_json_buffer = function(url, funcSuccess, funcError, ftimer) {
 var accountingGroups = function(){
     $("div#errorAcc").hide();
     $(function(){
-        get_json_buffer("/api/Groups",
+        get_json_buffer("/api/Groups/async",
                 addGroups,
                 function(msg){
                     $("div#errorAcc").show();
@@ -67,7 +67,7 @@ var accountingGroups = function(){
 var accountingFrequencies = function(id){
     $("div#errorAcc").hide();
     $(function(){
-        get_json_buffer("/api/FreqByGroup/"+id,
+        get_json_buffer("/api/FreqByGroup/"+id+"/async",
                 function(data){
                     addFrequencies(id, data);
                     accountingTests(id);
@@ -82,7 +82,7 @@ var accountingFrequencies = function(id){
 var accountingTests = function(id){
     $("div#errorAcc").hide();
     $(function(){
-        get_json_buffer("/api/TestsByGroup/"+id,
+        get_json_buffer("/api/TestsByGroup/"+id+"/async",
                 function(data){
                     addTests(id, data);
                 },
@@ -96,7 +96,7 @@ var accountingTests = function(id){
 var accountingLoad = function(){
     $("div#errorAcc").hide();
     $(function(){
-        get_json_buffer("/api/acc/Load",
+        get_json_buffer("/api/acc/Load/async",
                 function(){
                     accountingGroups();
                     accountingCalc(1000);
@@ -111,7 +111,7 @@ var accountingLoad = function(){
 var accountingCalc = function(numSamples){
     $("div#errorAcc").hide();
     $(function(){
-        get_json_buffer("/api/Calc/"+numSamples,
+        get_json_buffer("/api/Calc/"+numSamples+"/async",
                 function(){},
                 function(msg){
                     $("div#errorAcc").show();
@@ -123,7 +123,7 @@ var accountingCalc = function(numSamples){
 var accountingCIs = function(id){
     $("div#errorAcc").hide();
     $(function(){
-        get_json_buffer("/api/CIsByGroup/"+id,
+        get_json_buffer("/api/CIsByGroup/"+id+"/async",
                 function(data){
                     preProcessCIsByGroup(data);
                 },
@@ -131,7 +131,7 @@ var accountingCIs = function(id){
                     $("div#errorAcc").show();
                     $("strong#errorAccMessage").text(msg);
                 });
-        get_json_buffer("/api/BenfCIsByGroup/"+id,
+        get_json_buffer("/api/BenfCIsByGroup/"+id+"/async",
                 function(data){
                     preProcessBenfCIsByGroup(data);
                     showResult(id,"d1d2");
@@ -146,7 +146,7 @@ var accountingCIs = function(id){
 var accountingResults = function(id){
     $("div#errorAcc").hide();
     $(function(){
-        get_json_buffer("/api/ResultsByGroup/"+id,
+        get_json_buffer("/api/ResultsByGroup/"+id+"/async",
                 function(data){
                     processResultsByGroup(data);
                     showResult(id,"d1d2");
@@ -161,7 +161,7 @@ var accountingResults = function(id){
 var accountingExactParams = function(){
     $("div#errorAcc").hide();
     $(function(){
-        get_json_buffer("/api/ExactParams",
+        get_json("/api/ExactParams",
                 function(data){
                     processExact(data);
                     showResult(id,"d1d2");
@@ -176,7 +176,7 @@ var accountingExactParams = function(){
 var imageResult = function(threshold, whiteBg){
     $("div#errorImg").hide();
     $(function(){
-        get_json_buffer("/api/NewImage/"+threshold+"/"+whiteBg,
+        get_json_buffer("/api/NewImage/"+threshold+"/"+whiteBg+"/async",
                 function(data){
                     $("div#newImage").html('<img src="data:image/png;base64,' + data.image + '" class="img-responsive"/>');
                     $("div#sba").show();
@@ -191,7 +191,7 @@ var imageResult = function(threshold, whiteBg){
 var imageSBA = function(){
     $("div#errorImg").hide();
     $(function(){
-        get_json_buffer("/api/SBA/"+$("#wSizeSlider").slider("value"),
+        get_json_buffer("/api/SBA/"+$("#wSizeSlider").slider("value")+"/async",
                 function(){
                     if ($("div#originalImage").html() == "") imageOriginal();
                     $("div#newImage").html("");
@@ -210,7 +210,7 @@ var imageOriginal = function(){
         //$("div#sba").hide();
         //$("div#originalImage").html("");
         //$("div#newImage").html("");
-        get_json_buffer("/api/Image",
+        get_json("/api/Image",
                 function(data){
                     $("div#originalImage").html('<img src="data:image/png;base64,' + data.image + '" class="img-responsive"/>');
                     $("div#newImgTitle").hide();

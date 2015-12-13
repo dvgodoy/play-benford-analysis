@@ -2,62 +2,80 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-# Sync routes
+# Root
 GET        /                                     controllers.Application.root
 
-POST       /api/acc/Upload                           controllers.BenfordBootstrap.accUpload
-POST       /api/acc/URL                              controllers.BenfordBootstrap.loadDataURL
-GET        /api/acc/Load                             controllers.BenfordBootstrap.loadDataSession
-GET        /api/acc/:job/Load                        controllers.BenfordBootstrap.loadDataUploaded(job: String)
-GET        /api/acc/Load/$filePath<[\w\W]+>          controllers.BenfordBootstrap.loadDataLocal(filePath: String)
+# APIs for uploading/loading data
 
-POST       /api/img/Direct                           controllers.ImageSBA.loadImageDirect
-POST       /api/img/URL                              controllers.ImageSBA.loadImageURL
+## Images
 POST       /api/img/Upload                           controllers.ImageSBA.imgUpload
-GET        /api/img/Load                             controllers.ImageSBA.loadImageSession
-GET        /api/img/:job/Load                        controllers.ImageSBA.loadImageUploaded(job: String)
+POST       /api/img/URL                              controllers.ImageSBA.loadImageURL
+POST       /api/img/Direct                           controllers.ImageSBA.loadImageDirect
 GET        /api/img/Load/$filePath<[\w\W]+>          controllers.ImageSBA.loadImageLocal(filePath: String)
 
-GET        /api/:job/Image                           controllers.ImageSBA.getImage(job: String)
-GET        /api/:job/SBA/:wSize                      controllers.ImageSBA.calculate(job: String, wSize: Int)
-GET        /api/:job/NewImage/:threshold/:whiteBg    controllers.ImageSBA.getSBAImage(job: String, threshold: Double, whiteBg: Int)
+## Accounting
+POST       /api/acc/Upload                           controllers.BenfordBootstrap.accUpload
+POST       /api/acc/URL                              controllers.BenfordBootstrap.loadDataURL
+GET        /api/acc/Load                             controllers.BenfordBootstrap.loadDataSession(async: Boolean = false)
+GET        /api/acc/:job/Load                        controllers.BenfordBootstrap.loadDataUploaded(job: String, async: Boolean = false)
+GET        /api/acc/Load/async                       controllers.BenfordBootstrap.loadDataSession(async: Boolean = true)
+GET        /api/acc/:job/Load/async                  controllers.BenfordBootstrap.loadDataUploaded(job: String, async: Boolean = true)
+GET        /api/acc/Load/async/$filePath<[\w\W]+>    controllers.BenfordBootstrap.loadDataLocal(filePath: String, async: Boolean = true)
+GET        /api/acc/Load/$filePath<[\w\W]+>          controllers.BenfordBootstrap.loadDataLocal(filePath: String, async: Boolean = false)
 
-# API without Session
-GET        /api/:job/Groups                      controllers.BenfordBootstrap.getGroups(job: String)
-GET        /api/:job/Calc/:samples               controllers.BenfordBootstrap.calculate(job: String, samples: Int)
-GET        /api/:job/CIsByGroup/:id              controllers.BenfordBootstrap.getCIsByGroup(job: String, id: Int)
-GET        /api/:job/BenfCIsByGroup/:id          controllers.BenfordBootstrap.getBenfordCIsByGroup(job: String, id: Int)
-GET        /api/:job/CIsByLevel/:level           controllers.BenfordBootstrap.getCIsByLevel(job: String, level: Int)
-GET        /api/:job/BenfCIsByLevel/:level       controllers.BenfordBootstrap.getBenfordCIsByLevel(job: String, level: Int)
-GET        /api/:job/ResultsByGroup/:id          controllers.BenfordBootstrap.getResultsByGroup(job: String, id: Int)
-GET        /api/:job/ResultsByLevel/:level       controllers.BenfordBootstrap.getResultsByLevel(job: String, level: Int)
-GET        /api/:job/FreqByGroup/:id             controllers.BenfordBootstrap.getFreqByGroup(job: String, id: Int)
-GET        /api/:job/FreqByLevel/:level          controllers.BenfordBootstrap.getFreqByLevel(job: String, level: Int)
-GET        /api/:job/TestsByGroup/:id            controllers.BenfordBootstrap.getTestsByGroup(job: String, id: Int)
-GET        /api/:job/TestsByLevel/:level         controllers.BenfordBootstrap.getTestsByLevel(job: String, level: Int)
+# APIs without Session
 
-GET        /api/Image                              controllers.ImageSBA.getImageSession
-GET        /api/SBA/:wSize                         controllers.ImageSBA.calculateSession(wSize: Int)
-GET        /api/NewImage/:threshold/:whiteBg       controllers.ImageSBA.getSBAImageSession(threshold: Double, whiteBg: Int)
+## Images
+GET        /api/:job/Image                           controllers.ImageSBA.getImage(job: String, async: Boolean = false)
+GET        /api/:job/SBA/:wSize                      controllers.ImageSBA.calculate(job: String, wSize: Int, async: Boolean = false)
+GET        /api/:job/NewImage/:threshold/:whiteBg    controllers.ImageSBA.getSBAImage(job: String, threshold: Double, whiteBg: Int, async: Boolean = false)
+GET        /api/:job/Image/async                           controllers.ImageSBA.getImage(job: String, async: Boolean = true)
+GET        /api/:job/SBA/:wSize/async                      controllers.ImageSBA.calculate(job: String, wSize: Int, async: Boolean = true)
+GET        /api/:job/NewImage/:threshold/:whiteBg/async    controllers.ImageSBA.getSBAImage(job: String, threshold: Double, whiteBg: Int, async: Boolean = true)
 
-# API with Session
-GET        /api/Groups                           controllers.BenfordBootstrap.getGroupsSession
-GET        /api/Calc/:samples                    controllers.BenfordBootstrap.calculateSession(samples: Int)
-GET        /api/CIsByGroup/:id                   controllers.BenfordBootstrap.getCIsByGroupSession(id: Int)
-GET        /api/BenfCIsByGroup/:id               controllers.BenfordBootstrap.getBenfordCIsByGroupSession(id: Int)
-GET        /api/CIsByLevel/:level                controllers.BenfordBootstrap.getCIsByLevelSession(level: Int)
-GET        /api/BenfCIsByLevel/:level            controllers.BenfordBootstrap.getBenfordCIsByLevelSession(level: Int)
-GET        /api/ResultsByGroup/:id               controllers.BenfordBootstrap.getResultsByGroupSession(id: Int)
-GET        /api/ResultsByLevel/:level            controllers.BenfordBootstrap.getResultsByLevelSession(level: Int)
-GET        /api/FreqByGroup/:id                  controllers.BenfordBootstrap.getFreqByGroupSession(id: Int)
-GET        /api/FreqByLevel/:level               controllers.BenfordBootstrap.getFreqByLevelSession(level: Int)
-GET        /api/TestsByGroup/:id                 controllers.BenfordBootstrap.getTestsByGroupSession(id: Int)
-GET        /api/TestsByLevel/:level              controllers.BenfordBootstrap.getTestsByLevelSession(level: Int)
+## Accounting
+GET        /api/:job/Groups                      controllers.BenfordBootstrap.getGroups(job: String, async: Boolean = false)
+GET        /api/:job/Groups/async                controllers.BenfordBootstrap.getGroups(job: String, async: Boolean = true)
+GET        /api/:job/Calc/:samples               controllers.BenfordBootstrap.calculate(job: String, samples: Int, async: Boolean = false)
+GET        /api/:job/Calc/:samples/async         controllers.BenfordBootstrap.calculate(job: String, samples: Int, async: Boolean = true)
+GET        /api/:job/CIsByGroup/:id              controllers.BenfordBootstrap.getCIsByGroup(job: String, id: Int, async: Boolean = false)
+GET        /api/:job/CIsByGroup/:id/async        controllers.BenfordBootstrap.getCIsByGroup(job: String, id: Int, async: Boolean = true)
+GET        /api/:job/BenfCIsByGroup/:id          controllers.BenfordBootstrap.getBenfordCIsByGroup(job: String, id: Int, async: Boolean = false)
+GET        /api/:job/BenfCIsByGroup/:id/async    controllers.BenfordBootstrap.getBenfordCIsByGroup(job: String, id: Int, async: Boolean = true)
+GET        /api/:job/ResultsByGroup/:id          controllers.BenfordBootstrap.getResultsByGroup(job: String, id: Int, async: Boolean = false)
+GET        /api/:job/ResultsByGroup/:id/async    controllers.BenfordBootstrap.getResultsByGroup(job: String, id: Int, async: Boolean = true)
+GET        /api/:job/FreqByGroup/:id             controllers.BenfordBootstrap.getFreqByGroup(job: String, id: Int, async: Boolean = false)
+GET        /api/:job/FreqByGroup/:id/async       controllers.BenfordBootstrap.getFreqByGroup(job: String, id: Int, async: Boolean = true)
+GET        /api/:job/TestsByGroup/:id            controllers.BenfordBootstrap.getTestsByGroup(job: String, id: Int, async: Boolean = false)
+GET        /api/:job/TestsByGroup/:id/async      controllers.BenfordBootstrap.getTestsByGroup(job: String, id: Int, async: Boolean = true)
 
-#
-GET        /api/Progress                         controllers.Application.progressSession
-GET        /api/:job/Progress                    controllers.Application.progress(job: String)
+# APIs with Session
 
+## Images
+GET        /api/Image/async                        controllers.ImageSBA.getImageSession(async: Boolean = true)
+GET        /api/SBA/:wSize/async                   controllers.ImageSBA.calculateSession(wSize: Int, async: Boolean = true)
+GET        /api/NewImage/:threshold/:whiteBg/async controllers.ImageSBA.getSBAImageSession(threshold: Double, whiteBg: Int, async: Boolean = true)
+GET        /api/Image                              controllers.ImageSBA.getImageSession(async: Boolean = false)
+GET        /api/SBA/:wSize                         controllers.ImageSBA.calculateSession(wSize: Int, async: Boolean = false)
+GET        /api/NewImage/:threshold/:whiteBg       controllers.ImageSBA.getSBAImageSession(threshold: Double, whiteBg: Int, async: Boolean = false)
+
+## Accounting
+GET        /api/Groups                           controllers.BenfordBootstrap.getGroupsSession(async: Boolean = false)
+GET        /api/Groups/async                     controllers.BenfordBootstrap.getGroupsSession(async: Boolean = true)
+GET        /api/Calc/:samples                    controllers.BenfordBootstrap.calculateSession(samples: Int, async: Boolean = false)
+GET        /api/Calc/:samples/async              controllers.BenfordBootstrap.calculateSession(samples: Int, async: Boolean = true)
+GET        /api/CIsByGroup/:id                   controllers.BenfordBootstrap.getCIsByGroupSession(id: Int, async: Boolean = false)
+GET        /api/CIsByGroup/:id/async             controllers.BenfordBootstrap.getCIsByGroupSession(id: Int, async: Boolean = true)
+GET        /api/BenfCIsByGroup/:id               controllers.BenfordBootstrap.getBenfordCIsByGroupSession(id: Int, async: Boolean = false)
+GET        /api/BenfCIsByGroup/:id/async         controllers.BenfordBootstrap.getBenfordCIsByGroupSession(id: Int, async: Boolean = true)
+GET        /api/ResultsByGroup/:id               controllers.BenfordBootstrap.getResultsByGroupSession(id: Int, async: Boolean = false)
+GET        /api/ResultsByGroup/:id/async         controllers.BenfordBootstrap.getResultsByGroupSession(id: Int, async: Boolean = true)
+GET        /api/FreqByGroup/:id                  controllers.BenfordBootstrap.getFreqByGroupSession(id: Int, async: Boolean = false)
+GET        /api/FreqByGroup/:id/async            controllers.BenfordBootstrap.getFreqByGroupSession(id: Int, async: Boolean = true)
+GET        /api/TestsByGroup/:id                 controllers.BenfordBootstrap.getTestsByGroupSession(id: Int, async: Boolean = false)
+GET        /api/TestsByGroup/:id/async           controllers.BenfordBootstrap.getTestsByGroupSession(id: Int, async: Boolean = true)
+
+# APIs with fixed results
 GET        /api/ExactParams                      controllers.BenfordBootstrap.getExactBenfordParams
 GET        /api/ExactProbs                       controllers.BenfordBootstrap.getExactBenfordProbs
 
@@ -65,3 +83,9 @@ GET        /api/ExactProbs                       controllers.BenfordBootstrap.ge
 
 # Map static resources from the /public folder to the /assets URL path
 GET        /assets/*file                controllers.Assets.versioned(path="/public", file: Asset)
+
+# Commented!
+#GET        /api/img/Load                             controllers.ImageSBA.loadImageSession
+#GET        /api/img/:job/Load                        controllers.ImageSBA.loadImageUploaded(job: String)
+#GET        /api/Progress                         controllers.Application.progressSession
+#GET        /api/:job/Progress                    controllers.Application.progress(job: String)

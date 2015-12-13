@@ -1,7 +1,5 @@
 package actors
 
-import java.io.ByteArrayInputStream
-
 import akka.ActorTimer
 import akka.actor.{ActorLogging, Actor}
 import akka.pattern.pipe
@@ -9,8 +7,6 @@ import com.dvgodoy.spark.benford.image.SBA._
 import com.dvgodoy.spark.benford.util.JobId
 import models.ImageCommons
 import models.ImageService._
-import org.apache.commons.codec.binary.Base64
-import org.apache.commons.io.IOUtils
 import org.scalactic._
 import play.api.libs.json.{JsValue, Json}
 
@@ -22,8 +18,6 @@ class ImageActor extends Actor with ActorLogging with ActorTimer {
 
   import context.dispatcher
 
-  private var image: String = _
-  private var original: java.io.ByteArrayOutputStream = _
   private var data: SBAImageDataMsg = _
   private var sba: SBADataMsg = _
 
@@ -35,12 +29,7 @@ class ImageActor extends Actor with ActorLogging with ActorTimer {
       data = ImageCommons.loadData(baos)
       val result: JsValue = data match {
         case Good(s) => {
-          original = baos
-          val is = new ByteArrayInputStream(baos.toByteArray)
-          val bytes = IOUtils.toByteArray(is)
-          val bytes64 = Base64.encodeBase64(bytes)
-          image = new String(bytes64)
-          Json.obj("job" -> Json.toJson(self.path.name))
+          Json.obj("job" -> Json.toJson(self.path.name.slice(0,self.path.name.length - 7)))
         }
         case Bad(e) => Json.obj("error" -> Json.toJson(e.head))
       }
@@ -50,7 +39,9 @@ class ImageActor extends Actor with ActorLogging with ActorTimer {
       val originalSender = sender
       data = ImageCommons.loadData(filePath)
       val result: JsValue = data match {
-        case Good(s) => Json.obj("job" -> Json.toJson(self.path.name))
+        case Good(s) => {
+          Json.obj("job" -> Json.toJson(self.path.name.slice(0,self.path.name.length - 7)))
+        }
         case Bad(e) => Json.obj("error" -> Json.toJson(e.head))
       }
       Future(result) map (Finished(srvData(filePath), _)) pipeTo originalSender
@@ -59,17 +50,17 @@ class ImageActor extends Actor with ActorLogging with ActorTimer {
       val originalSender = sender
       sba = ImageCommons.calcSBA(data, windowSize)
       val result: JsValue = sba match {
-        case Good(s) => Json.toJson("")
+        case Good(s) => Json.obj("calc" -> "ok")
         case Bad(e) => Json.obj("error" -> Json.toJson(e.head))
       }
       Future(result) map (Finished(srvCalc(windowSize), _)) pipeTo originalSender
     }
     case srvImage() => {
       val originalSender = sender
-      val result: JsValue = if (image == null) {
+      val result: JsValue = if (data.get.originalImage == null) {
         Json.obj("error" -> "Error: Cannot load original image.")
       } else {
-        Json.obj("image" -> Json.toJson(image))
+        Json.obj("image" -> Json.toJson(data.get.originalImage))
       }
       Future(result) map (Finished(srvImage(), _)) pipeTo originalSender
     }

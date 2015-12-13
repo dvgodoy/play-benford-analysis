@@ -5,16 +5,11 @@ object BenfordService {
   case class srvData(filePath: String)
   case class srvCalc(numberSamples: Int)
   case class srvCIsByGroupId(groupId: Int)
-  case class srvCIsByLevel(level: Int)
   case class srvBenfordCIsByGroupId(groupId: Int)
-  case class srvBenfordCIsByLevel(level: Int)
   case class srvResultsByGroupId(groupId: Int)
-  case class srvResultsByLevel(level: Int)
   case class srvFrequenciesByGroupId(groupId: Int)
-  case class srvFrequenciesByLevel(level: Int)
   case class srvGroups()
   case class srvNumSamples()
   case class srvTestsByGroupId(groupId: Int)
-  case class srvTestsByLevel(level: Int)
 
 }

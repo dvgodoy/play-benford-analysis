@@ -2,9 +2,9 @@ package controllers
 
 import java.util.concurrent.TimeUnit._
 
+import actors.ActorBuffer.Finished
 import akka.pattern.ask
 import akka.util.Timeout
-import java.io.File
 import models.{SparkCommons, BenfordCommons}
 import models.BenfordService._
 import play.api.libs.json.{JsUndefined, JsDefined, JsValue, Json}
@@ -22,146 +22,142 @@ class BenfordBootstrap extends Controller {
     new URL(url) #> new File(filename) !!
   }
 
+  def processResult(result: Finished, error: Status, session: Session): Result = {
+    processResult(result.result.asInstanceOf[JsValue], error, session)
+  }
+
   def processResult(result: JsValue, error: Status, session: Session): Result = {
     (result \ "error") match {
-      //case msg: JsDefined => error(msg.get).withSession(session)
       case msg: JsDefined => error(result).withSession(session)
       case res: JsUndefined => Ok(result).withSession(session)
     }
   }
 
-  def accUpload = Action(parse.multipartFormData) { request =>
+  def askActor(id: String, buffer: Boolean, session: Session, message: scala.Any, error: Status): Future[Result] = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val benfordActor = BenfordCommons.getJob(id + (if (!buffer) "_worker" else ""))
+    val res: Future[Result] = if (!buffer) {
+      for {
+        bnf <- ask(benfordActor, message).mapTo[Finished]
+      } yield processResult(bnf, error, session + ("job", id))
+    } else {
+      for {
+        bnf <- ask(benfordActor, message).mapTo[JsValue]
+      } yield processResult(bnf, error, session + ("job", id))
+    }
+    res
+  }
+
+  def accUpload = Action.async(parse.multipartFormData) { request =>
+    import scala.concurrent.ExecutionContext.Implicits.global
+
     val id = BenfordCommons.createJob
-    request.body.file("accData").map { accData =>
-      val filePath = SparkCommons.tmpFolder + "/" + id + ".csv"
+    val filePath = SparkCommons.tmpFolder + "/" + id + ".csv"
+    val res = try {
+      val accData = request.body.files(0)
       accData.ref.moveTo(new File(filePath))
       if (SparkCommons.hadoop) SparkCommons.copyToHdfs(SparkCommons.tmpFolder + "/", id + ".csv")
-      Ok("").withSession(request.session + ("job", id) + ("filePath", if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + filePath else filePath))
-    }.getOrElse {
-      NotFound(Json.obj("error" -> "Error: There was a problem uploading your file. Please try again."))
+      Json.obj("job" -> Json.toJson(id))
+    } catch {
+      case ex: Exception => Json.obj("error" -> "Error: There was a problem uploading your file. Please try again.")
     }
+    Future(processResult(res, NotFound, request.session + ("job", id) + ("filePath", if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + filePath else filePath)))
   }
 
-  def loadDataURL = Action(parse.multipartFormData) { request =>
+  def loadDataURL = Action.async { request =>
+    import scala.concurrent.ExecutionContext.Implicits.global
+
     val id = BenfordCommons.createJob
-    request.body.dataParts.get("accURL").map { accData =>
-      val url = accData.head
-      val filePath = SparkCommons.tmpFolder + "/" + id + ".csv"
+    val filePath = SparkCommons.tmpFolder + "/" + id + ".csv"
+    val url = {
+      try {
+        request.body.asMultipartFormData.get.dataParts.get("accURL").get.head
+      } catch {
+        case ex: Exception => request.body.asFormUrlEncoded.get("accURL").head
+      }
+    }
+    val res = try {
       fileDownloader(url, filePath)
       if (SparkCommons.hadoop) SparkCommons.copyToHdfs(SparkCommons.tmpFolder + "/", id + ".csv")
-      Ok("").withSession(request.session + ("job", id) + ("filePath", if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + filePath else filePath))
-    }.getOrElse{
-      NotFound(Json.obj("error" -> "Error: There was a problem uploading your file. Please try again."))
+      Json.obj("job" -> Json.toJson(id))
+    } catch {
+      case ex: Exception => Json.obj("error" -> "Error: There was a problem uploading your file. Please try again.")
     }
+    Future(processResult(res, NotFound, request.session + ("job", id) + ("filePath", if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + filePath else filePath)))
   }
 
-  def loadDataSession = Action.async { request =>
+  def loadDataSession(async: Boolean) = Action.async { request =>
     val id = request.session.get("job").getOrElse("")
     val filePath = request.session.get("filePath").getOrElse("")
-    loadData(id, filePath).apply(request)
+    loadData(id, filePath, async).apply(request)
   }
 
-  def loadDataUploaded(id: String) = Action.async { request =>
+  def loadDataUploaded(id: String, async: Boolean) = Action.async { request =>
     val filePath = if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + SparkCommons.tmpFolder + "/" + id + ".csv" else "file://" + SparkCommons.tmpFolder + "/" + id + ".csv"
-    loadData(id, filePath).apply(request)
+    loadData(id, filePath, async).apply(request)
   }
 
-  def loadDataLocal(filePath: String) = Action.async { request =>
+  def loadDataLocal(filePath: String, async: Boolean) = Action.async { request =>
     val id = BenfordCommons.createJob
-    loadData(id, filePath).apply(request)
+    loadData(id, filePath, async).apply(request)
   }
 
-  def loadData(id: String, filePath: String) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val benfordActor = BenfordCommons.getJob(id)
-    val res: Future[Result] = for {
-      rsp <- ask(benfordActor, srvData(filePath)).mapTo[JsValue]
-    } yield processResult(rsp, NotAcceptable, request.session + ("job", id))
-    res
+  def loadData(id: String, filePath: String, async: Boolean) = Action.async { request =>
+    askActor(id, async, request.session, srvData(filePath), NotAcceptable)
   }
 
-  def getGroupsSession = Action.async { request =>
+  def getGroupsSession(async: Boolean) = Action.async { request =>
     val id = request.session.get("job").getOrElse("")
-    getGroups(id).apply(request)
+    getGroups(id, async).apply(request)
   }
 
-  def getGroups(id: String) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val benfordActor = BenfordCommons.getJob(id)
-    val res: Future[Result] = for {
-      f <- ask(benfordActor, srvGroups()).mapTo[JsValue]
-    } yield processResult(f, BadRequest, request.session)
-    res
+  def getGroups(id: String, async: Boolean) = Action.async { request =>
+    askActor(id, async, request.session, srvGroups(), BadRequest)
   }
 
-  def calculateSession(numSamples: Int) = Action.async { request =>
+  def calculateSession(numSamples: Int, async: Boolean) = Action.async { request =>
     val id = request.session.get("job").getOrElse("")
-    calculate(id, numSamples).apply(request)
+    calculate(id, numSamples, async).apply(request)
   }
 
-  def calculate(id: String, numSamples: Int) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val benfordActor = BenfordCommons.getJob(id)
-    val res: Future[Result] = for {
-      rsp <- ask(benfordActor, srvCalc(numSamples)).mapTo[JsValue]
-    } yield processResult(rsp, BadRequest, request.session)
-    res
+  def calculate(id: String, numSamples: Int, async: Boolean) = Action.async { request =>
+    askActor(id, async, request.session, srvCalc(numSamples), BadRequest)
   }
 
-  def getCIsByGroupSession(groupId: Int) = Action.async { request =>
+  def getCIsByGroupSession(groupId: Int, async: Boolean) = Action.async { request =>
     val id = request.session.get("job").getOrElse("")
-    getCIsByGroup(id, groupId).apply(request)
+    getCIsByGroup(id, groupId, async).apply(request)
   }
 
-  def getCIsByGroup(id: String, groupId: Int) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val benfordActor = BenfordCommons.getJob(id)
-    val res: Future[Result] = for {
-      ci <- ask(benfordActor, srvCIsByGroupId(groupId)).mapTo[JsValue]
-    } yield processResult(ci, BadRequest, request.session)
-    res
+  def getCIsByGroup(id: String, groupId: Int, async: Boolean) = Action.async { request =>
+    askActor(id, async, request.session, srvCIsByGroupId(groupId), BadRequest)
   }
 
-  def getBenfordCIsByGroupSession(groupId: Int) = Action.async { request =>
+  def getBenfordCIsByGroupSession(groupId: Int, async: Boolean) = Action.async { request =>
     val id = request.session.get("job").getOrElse("")
-    getBenfordCIsByGroup(id, groupId).apply(request)
+    getBenfordCIsByGroup(id, groupId, async).apply(request)
   }
 
-  def getBenfordCIsByGroup(id: String, groupId: Int) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val benfordActor = BenfordCommons.getJob(id)
-    val res: Future[Result] = for {
-      ci <- ask(benfordActor, srvBenfordCIsByGroupId(groupId)).mapTo[JsValue]
-    } yield processResult(ci, BadRequest, request.session)
-    res
+  def getBenfordCIsByGroup(id: String, groupId: Int, async: Boolean) = Action.async { request =>
+    askActor(id, async, request.session, srvBenfordCIsByGroupId(groupId), BadRequest)
   }
 
-  def getResultsByGroupSession(groupId: Int) = Action.async { request =>
+  def getResultsByGroupSession(groupId: Int, async: Boolean) = Action.async { request =>
     val id = request.session.get("job").getOrElse("")
-    getResultsByGroup(id, groupId).apply(request)
+    getResultsByGroup(id, groupId, async).apply(request)
   }
 
-  def getResultsByGroup(id: String, groupId: Int) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val benfordActor = BenfordCommons.getJob(id)
-    val res: Future[Result] = for {
-      r <- ask(benfordActor, srvResultsByGroupId(groupId)).mapTo[JsValue]
-    } yield processResult(r, BadRequest, request.session)
-    res
+  def getResultsByGroup(id: String, groupId: Int, async: Boolean) = Action.async { request =>
+    askActor(id, async, request.session, srvResultsByGroupId(groupId), BadRequest)
   }
 
-  def getFreqByGroupSession(groupId: Int) = Action.async { request =>
+  def getFreqByGroupSession(groupId: Int, async: Boolean) = Action.async { request =>
     val id = request.session.get("job").getOrElse("")
-    getFreqByGroup(id, groupId).apply(request)
+    getFreqByGroup(id, groupId, async).apply(request)
   }
 
-  def getFreqByGroup(id: String, groupId: Int) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val benfordActor = BenfordCommons.getJob(id)
-    val res: Future[Result] = for {
-      f <- ask(benfordActor, srvFrequenciesByGroupId(groupId)).mapTo[JsValue]
-    } yield processResult(f, BadRequest, request.session)
-    res
+  def getFreqByGroup(id: String, groupId: Int, async: Boolean) = Action.async { request =>
+    askActor(id, async, request.session, srvFrequenciesByGroupId(groupId), BadRequest)
   }
 
   def getExactBenfordParams = Action.async { request =>
@@ -180,93 +176,13 @@ class BenfordBootstrap extends Controller {
     res
   }
 
-  def getTestsByGroupSession(groupId: Int) = Action.async { request =>
+  def getTestsByGroupSession(groupId: Int, async: Boolean) = Action.async { request =>
     val id = request.session.get("job").getOrElse("")
-    getTestsByGroup(id, groupId).apply(request)
+    getTestsByGroup(id, groupId, async).apply(request)
   }
 
-  def getTestsByGroup(id: String, groupId: Int) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val benfordActor = BenfordCommons.getJob(id)
-    val res: Future[Result] = for {
-      f <- ask(benfordActor, srvTestsByGroupId(groupId)).mapTo[JsValue]
-    } yield processResult(f, BadRequest, request.session)
-    res
-  }
-
-  /*
-  #
-  # BYLEVEL FUNCTIONS ARE NOT YET AVAILABLE IN THE ACTOR
-  #
-  */
-  def getCIsByLevelSession(level: Int) = Action.async { request =>
-    val id = request.session.get("job").getOrElse("")
-    getCIsByLevel(id, level).apply(request)
-  }
-
-  def getCIsByLevel(id: String, level: Int) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val benfordActor = BenfordCommons.getJob(id)
-    val res: Future[Result] = for {
-      ci <- ask(benfordActor, srvCIsByLevel(level)).mapTo[JsValue]
-    } yield processResult(ci, BadRequest, request.session)
-    res
-  }
-
-  def getBenfordCIsByLevelSession(level: Int) = Action.async { request =>
-    val id = request.session.get("job").getOrElse("")
-    getBenfordCIsByLevel(id, level).apply(request)
-  }
-
-  def getBenfordCIsByLevel(id: String, level: Int) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val benfordActor = BenfordCommons.getJob(id)
-    val res: Future[Result] = for {
-      ci <- ask(benfordActor, srvBenfordCIsByLevel(level)).mapTo[JsValue]
-    } yield processResult(ci, BadRequest, request.session)
-    res
-  }
-
-  def getResultsByLevelSession(level: Int) = Action.async { request =>
-    val id = request.session.get("job").getOrElse("")
-    getResultsByLevel(id, level).apply(request)
-  }
-
-  def getResultsByLevel(id: String, level: Int) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val benfordActor = BenfordCommons.getJob(id)
-    val res: Future[Result] = for {
-      r <- ask(benfordActor, srvResultsByLevel(level)).mapTo[JsValue]
-    } yield processResult(r, BadRequest, request.session)
-    res
-  }
-
-  def getFreqByLevelSession(level: Int) = Action.async { request =>
-    val id = request.session.get("job").getOrElse("")
-    getFreqByLevel(id, level).apply(request)
-  }
-
-  def getFreqByLevel(id: String, level: Int) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val benfordActor = BenfordCommons.getJob(id)
-    val res: Future[Result] = for {
-      f <- ask(benfordActor, srvFrequenciesByLevel(level)).mapTo[JsValue]
-    } yield processResult(f, BadRequest, request.session)
-    res
-  }
-
-  def getTestsByLevelSession(level: Int) = Action.async { request =>
-    val id = request.session.get("job").getOrElse("")
-    getTestsByLevel(id, level).apply(request)
-  }
-
-  def getTestsByLevel(id: String, level: Int) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val benfordActor = BenfordCommons.getJob(id)
-    val res: Future[Result] = for {
-      f <- ask(benfordActor, srvTestsByLevel(level)).mapTo[JsValue]
-    } yield processResult(f, BadRequest, request.session)
-    res
+  def getTestsByGroup(id: String, groupId: Int, async: Boolean) = Action.async { request =>
+    askActor(id, async, request.session, srvTestsByGroupId(groupId), BadRequest)
   }
 
 }

@@ -1,10 +1,7 @@
 package models
 
-import java.util.concurrent.TimeUnit._
-
 import actors.ImageBufferActor
-import akka.actor.{ActorRef, Props, ActorSelection, ActorSystem}
-import akka.util.Timeout
+import akka.actor.{Props, ActorSelection, ActorSystem}
 import com.dvgodoy.spark.benford.util.JobId
 import com.dvgodoy.spark.benford.image.SBA._
 

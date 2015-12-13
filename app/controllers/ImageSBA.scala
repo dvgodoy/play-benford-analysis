@@ -2,6 +2,7 @@ package controllers
 
 import java.util.concurrent.TimeUnit._
 
+import actors.ActorBuffer.Finished
 import akka.pattern.ask
 import akka.util.Timeout
 import java.io.{ByteArrayOutputStream, File}
@@ -13,10 +14,13 @@ import play.api.mvc._
 
 import scala.concurrent.Future
 import java.net.URL
-import java.io.File
 
 class ImageSBA extends Controller {
   implicit val timeout = Timeout(30, SECONDS)
+
+  def processResult(result: Finished, error: Status, session: Session): Result = {
+    processResult(result.result.asInstanceOf[JsValue], error, session)
+  }
 
   def processResult(result: JsValue, error: Status, session: Session): Result = {
     (result \ "error") match {
@@ -25,60 +29,63 @@ class ImageSBA extends Controller {
     }
   }
 
-  def imgUpload = Action(parse.multipartFormData) { request =>
-    val id = ImageCommons.createJob
-    request.body.file("imgData").map { imgData =>
-      val filePath = SparkCommons.tmpFolder + "/" + id + ".png"
-      imgData.ref.moveTo(new File(filePath))
-      if (SparkCommons.hadoop) SparkCommons.copyToHdfs(SparkCommons.tmpFolder + "/", id + ".png")
-      Ok("").withSession(request.session + ("jobImg", id) + ("filePathImg", if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + filePath else filePath))
-    }.getOrElse {
-      NotFound("Error: There was a problem uploading your file. Please try again.")
+  def askActor(id: String, buffer: Boolean, session: Session, message: scala.Any, error: Status): Future[Result] = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val imageActor = ImageCommons.getJob(id + (if (!buffer) "_worker" else ""))
+    val res: Future[Result] = if (!buffer) {
+      for {
+        img <- ask(imageActor, message).mapTo[Finished]
+      } yield processResult(img, error, session + ("jobImg", id))
+    } else {
+      for {
+        img <- ask(imageActor, message).mapTo[JsValue]
+      } yield processResult(img, error, session + ("jobImg", id))
     }
+    res
+  }
+
+  def imgUpload = Action.async(parse.multipartFormData) { request =>
+    import scala.concurrent.ExecutionContext.Implicits.global
+
+    val uuid = java.util.UUID.randomUUID().toString
+    val res = try {
+      val imgData = request.body.files(0)
+      val filePath = SparkCommons.tmpFolder + "/" + uuid
+      imgData.ref.moveTo(new File(filePath))
+      if (SparkCommons.hadoop) SparkCommons.copyToHdfs(SparkCommons.tmpFolder + "/", uuid)
+      val filePathImg = if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + filePath else filePath
+      Json.obj("uuid" -> Json.toJson(filePathImg))
+    } catch {
+      case ex: Exception => Json.obj("error" -> "Error: There was a problem uploading your file. Please try again.")
+    }
+    Future(processResult(res, NotFound, request.session))
   }
 
   def loadImageDirect = Action.async(parse.multipartFormData) { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-
     val id = ImageCommons.createJob
-    val imageActor = ImageCommons.getJob(id)
 
     val imgData = request.body.files(0)
     val result = ImageIO.read(imgData.ref.file)
     val baos = new ByteArrayOutputStream()
     ImageIO.write(result, "png", baos)
-    val res: Future[Result] = for {
-      img <- ask(imageActor, srvDirect(baos)).mapTo[JsValue]
-    } yield processResult(img, NotAcceptable, request.session + ("jobImg", id))
-    res
+    askActor(id, false, request.session, srvDirect(baos), NotAcceptable)
   }
 
-  def loadImageURL = Action.async(parse.multipartFormData) { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-
+  def loadImageURL = Action.async { request =>
     val id = ImageCommons.createJob
-    val imageActor = ImageCommons.getJob(id)
 
-    val url = request.body.dataParts.get("imgURL").get.head
+    val url = {
+      try {
+        request.body.asMultipartFormData.get.dataParts.get("imgURL").get.head
+      } catch {
+        case ex: Exception => request.body.asFormUrlEncoded.get("imgURL").head
+      }
+    }
+
     val filePath = SparkCommons.tmpFolder + "/" + id + ".img"
-
     val baos = new ByteArrayOutputStream()
     ImageIO.write(ImageIO.read(new URL(url)), "png", baos)
-    val res: Future[Result] = for {
-      img <- ask(imageActor, srvDirect(baos)).mapTo[JsValue]
-    } yield processResult(img, NotAcceptable, request.session + ("jobImg", id))
-    res
-  }
-
-  def loadImageSession = Action.async { request =>
-    val id = request.session.get("jobImg").getOrElse("")
-    val filePath = request.session.get("filePathImg").getOrElse("")
-    loadImage(id, filePath).apply(request)
-  }
-
-  def loadImageUploaded(id: String) = Action.async { request =>
-    val filePath = if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + SparkCommons.tmpFolder + "/" + id + ".png" else "file://" + SparkCommons.tmpFolder + "/" + id + ".png"
-    loadImage(id, filePath).apply(request)
+    askActor(id, false, request.session, srvDirect(baos), NotAcceptable)
   }
 
   def loadImageLocal(filePath: String) = Action.async { request =>
@@ -87,54 +94,45 @@ class ImageSBA extends Controller {
   }
 
   def loadImage(id: String, filePath: String) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val imageActor = ImageCommons.getJob(id)
-    val res: Future[Result] = for {
-      res <- ask(imageActor, srvData(filePath)).mapTo[JsValue]
-    } yield processResult(res, NotAcceptable, request.session + ("jobImg", id))
-    res
+    askActor(id, false, request.session, srvData(filePath), NotAcceptable)
   }
 
-  def calculateSession(windowSize: Int) = Action.async { request =>
+  def calculateSession(windowSize: Int, async: Boolean) = Action.async { request =>
     val id = request.session.get("jobImg").getOrElse("")
-    calculate(id, windowSize).apply(request)
+    calculate(id, windowSize, async).apply(request)
   }
 
-  def calculate(id: String, windowSize: Int) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val imageActor = ImageCommons.getJob(id)
-    val res: Future[Result] = for {
-      res <- ask(imageActor, srvCalc(windowSize)).mapTo[JsValue]
-    } yield processResult(res, BadRequest, request.session + ("jobImg", id))
-    res
+  def calculate(id: String, windowSize: Int, async: Boolean) = Action.async { request =>
+    askActor(id, async, request.session, srvCalc(windowSize), BadRequest)
   }
 
-  def getImageSession() = Action.async { request =>
+  def getImageSession(async: Boolean) = Action.async { request =>
     val id = request.session.get("jobImg").getOrElse("")
-    getImage(id).apply(request)
+    getImage(id, async).apply(request)
   }
 
-  def getImage(id: String) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val imageActor = ImageCommons.getJob(id)
-    val res: Future[Result] = for {
-      img <- ask(imageActor, srvImage()).mapTo[JsValue]
-    } yield processResult(img, BadRequest, request.session + ("jobImg", id))
-    res
+  def getImage(id: String, async: Boolean) = Action.async { request =>
+    askActor(id, async, request.session, srvImage(), BadRequest)
   }
 
-  def getSBAImageSession(threshold: Double, whiteBackground: Int) = Action.async { request =>
+  def getSBAImageSession(threshold: Double, whiteBackground: Int, async: Boolean) = Action.async { request =>
     val id = request.session.get("jobImg").getOrElse("")
-    getSBAImage(id, threshold, whiteBackground).apply(request)
+    getSBAImage(id, threshold, whiteBackground, async).apply(request)
   }
 
-  def getSBAImage(id: String, threshold: Double, whiteBackground: Int) = Action.async { request =>
-    import scala.concurrent.ExecutionContext.Implicits.global
-    val imageActor = ImageCommons.getJob(id)
-    val res: Future[Result] = for {
-      img <- ask(imageActor, srvSBAImage(threshold, whiteBackground == 1)).mapTo[JsValue]
-    } yield processResult(img, BadRequest, request.session + ("jobImg", id))
-    res
+  def getSBAImage(id: String, threshold: Double, whiteBackground: Int, async: Boolean) = Action.async { request =>
+    askActor(id, async, request.session, srvSBAImage(threshold, whiteBackground == 1), BadRequest)
   }
+
+  /*def loadImageSession = Action.async { request =>
+    val id = request.session.get("jobImg").getOrElse("")
+    val filePath = request.session.get("filePathImg").getOrElse("")
+    loadImage(id, filePath).apply(request)
+  }*/
+
+  /*def loadImageUploaded(id: String) = Action.async { request =>
+    val filePath = if (SparkCommons.hadoop) "hdfs://" + SparkCommons.masterIP + ":9000" + SparkCommons.tmpFolder + "/" + id + ".png" else SparkCommons.tmpFolder + "/" + id + ".png"
+    loadImage(id, filePath).apply(request)
+  }*/
 
 }

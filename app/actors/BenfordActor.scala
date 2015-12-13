@@ -17,7 +17,7 @@ class BenfordActor extends Actor with ActorLogging with ActorTimer {
   import context.dispatcher
 
   private var data: DataByLevelMsg = _
-  private var numberSamples: Int = 25000
+  private var numberSamples: Int = 0
 
   protected var basicBoot: BasicBootMsg = _
   protected var dataStatsRDD: Array[DataStatsMsg] = _
@@ -55,18 +55,22 @@ class BenfordActor extends Actor with ActorLogging with ActorTimer {
     resultsRDD(groupId)
   }
 
+  def init: Unit = {
+    val numLevels = data.get.levels.keys.size
+    dataStatsRDD = new Array[DataStatsMsg](numLevels)
+    sampleRDD = new Array[StatsCIByLevelMsg](numLevels)
+    benfordRDD = new Array[StatsCIByLevelMsg](numLevels)
+    resultsRDD = new Array[ResultsByLevelMsg](numLevels)
+  }
+
   def receive = {
     case srvData(filePath: String) => {
       val originalSender = sender
       data = BenfordCommons.loadData(filePath)
       val result: JsValue = data match {
         case Good(dbl) => {
-          val numLevels = data.get.levels.keys.size
-          dataStatsRDD = new Array[DataStatsMsg](numLevels)
-          sampleRDD = new Array[StatsCIByLevelMsg](numLevels)
-          benfordRDD = new Array[StatsCIByLevelMsg](numLevels)
-          resultsRDD = new Array[ResultsByLevelMsg](numLevels)
-          Json.obj("job" -> Json.toJson(self.path.name))
+          init
+          Json.obj("job" -> Json.toJson(self.path.name.slice(0,self.path.name.length - 7)))
         }
         case Bad(e) => Json.obj("error" -> Json.toJson(e.head))
       }
@@ -74,10 +78,11 @@ class BenfordActor extends Actor with ActorLogging with ActorTimer {
     }
     case srvCalc(numSamples: Int) => {
       val originalSender = sender
+      if (numSamples != numberSamples) init
       numberSamples = numSamples
       basicBoot = BenfordCommons.calcBasicBoot(data, numSamples)
       val result: JsValue = basicBoot match {
-        case Good(s) => Json.toJson("")
+        case Good(s) => Json.obj("calc" -> "ok")
         case Bad(e) => Json.obj("error" -> Json.toJson(e.head))
       }
       Future(result) map (Finished(srvCalc(numSamples), _)) pipeTo originalSender
@@ -90,30 +95,17 @@ class BenfordActor extends Actor with ActorLogging with ActorTimer {
       val originalSender = sender
       Future(BenfordCommons.getCIsByGroupId(calcSample(groupId))) map (Finished(srvCIsByGroupId(groupId), _)) pipeTo originalSender
     }
-    case srvCIsByLevel(level: Int) => {
-      // to be implemented
-    }
     case srvBenfordCIsByGroupId(groupId: Int) => {
       val originalSender = sender
       Future(BenfordCommons.getCIsByGroupId(calcBenford(groupId))) map (Finished(srvBenfordCIsByGroupId(groupId), _)) pipeTo originalSender
-    }
-    case srvBenfordCIsByLevel(level: Int) => {
-      // to be implemented
     }
     case srvResultsByGroupId(groupId: Int) => {
       val originalSender = sender
       Future(BenfordCommons.getResultsByGroupId(calcResults(groupId))) map (Finished(srvResultsByGroupId(groupId), _)) pipeTo originalSender
     }
-    case srvResultsByLevel(level: Int) => {
-      // to be implemented
-    }
     case srvFrequenciesByGroupId(groupId: Int) => {
       val originalSender = sender
       Future(BenfordCommons.getFrequenciesByGroupId(data, groupId)) map (Finished(srvFrequenciesByGroupId(groupId), _)) pipeTo originalSender
-    }
-    case srvFrequenciesByLevel(level: Int) => {
-      //val originalSender = sender
-      //Future(BenfordCommons.getFrequenciesByLevel(data, level)) pipeTo originalSender
     }
     case srvGroups() => {
       val originalSender = sender
@@ -122,10 +114,6 @@ class BenfordActor extends Actor with ActorLogging with ActorTimer {
     case srvTestsByGroupId(groupId: Int) => {
       val originalSender = sender
       Future(BenfordCommons.getTestsByGroupId(data, groupId)) map (Finished(srvTestsByGroupId(groupId), _)) pipeTo originalSender
-    }
-    case srvTestsByLevel(level: Int) => {
-      //val originalSender = sender
-      //Future(BenfordCommons.getTestsByLevel(data, level)) pipeTo originalSender
     }
   }
 

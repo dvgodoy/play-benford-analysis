@@ -11,8 +11,7 @@ libraryDependencies ++= Dependencies.sparkAkkaHadoop
 
 unmanagedJars in Compile += file("lib/spark-benford-analysis_2.11-0.0.1-SNAPSHOT.jar")
 
-//libraryDependencies += "com.dvgodoy" %% "spark-benford-analysis" % "0.0.1-SNAPSHOT"
-//libraryDependencies += "com.github.dvgodoy" % "spark-benford-analysis" % "-SNAPSHOT"
+libraryDependencies += "com.github.dvgodoy" % "spark-benford-analysis" % "v0.0.1"
 
 libraryDependencies  ++= Seq(
   // other dependencies here
@@ -37,7 +36,7 @@ dependencyOverrides ++= Set(
 
 resolvers += "scalaz-bintray" at "http://dl.bintray.com/scalaz/releases"
 
-//resolvers += "jitpack" at "https://jitpack.io"
+resolvers += "jitpack" at "https://jitpack.io"
 
 releaseSettings
 

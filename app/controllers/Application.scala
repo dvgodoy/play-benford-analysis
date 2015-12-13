@@ -11,10 +11,7 @@ import views.html._
 class Application @Inject()(ws: WSClient) extends Controller {
 
   def root = Action { request =>
-    //val uuid = request.session.get("id").getOrElse(java.util.UUID.randomUUID().toString)
-    //val job = request.session.get("job").getOrElse("0")
-    //implicit val session = request.session
-    Ok(index(""))//.withSession(request.session + (("id", uuid), ("job", job)))
+    Ok(index(""))
   }
 
   def progressSession = Action.async { request =>
@@ -30,25 +27,4 @@ class Application @Inject()(ws: WSClient) extends Controller {
       .map { response => Ok(response.body) }
   }
 
-  /*val html = scala.io.Source.fromURL("https://spark.apache.org/").mkString
-  val list = html.split("\n").filter(_ != "")*/
-
-/*abstract class ItemProcessingWorker extends Actor {
-
-  def receive = {
-    case ProcessItem(item) =>
-      try {
-        process(item) match {
-          case None => sender ! ProcessedOneItem
-          case Some(error) => sender ! error
-        }
-      } catch {
-        case t: Throwable =>
-          sender ! ItemProcessingError(item.id, "Unhandled error", Some(t))
-      }
-  }
-
-  def process(item: BatchItem): Option[ItemProcessingError]
-
-}*/
 }
