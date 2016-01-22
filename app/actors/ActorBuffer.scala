@@ -7,23 +7,24 @@ import scala.concurrent.Future
 import scala.collection.mutable.Map
 
 object ActorBuffer {
-  case class Finished(service: scala.Any, result: scala.Any)
-  val PROCESSING: scala.Int = 0
-  val FINISHED: scala.Int = 1
+  case class Finished(service: Any, result: Any)
+  case class ServiceResult(Status: Int, Result: Any)
 
-  val STARTED_MSG: JsValue = Json.obj("status" -> "started")
-  val ACK_MSG: JsValue = Json.obj("status" -> "finished")
-  val PROCESSING_MSG: JsValue = Json.obj("status" -> "processing")
-  val UNEXPECTED_STATUS_MSG: JsValue = Json.obj("error" -> "Error: Unexpected status found!")
-  val UNEXPECTED_FINISH_MSG: JsValue = Json.obj("error" -> "Error: Unexpected finishing reported!")
+  val PROCESSING = 0
+  val FINISHED = 1
+
+  val STARTED_MSG = Json.obj("status" -> "started")
+  val ACK_MSG = Json.obj("status" -> "finished")
+  val PROCESSING_MSG = Json.obj("status" -> "processing")
+  val UNEXPECTED_STATUS_MSG = Json.obj("error" -> "Error: Unexpected status found!")
+  val UNEXPECTED_FINISH_MSG = Json.obj("error" -> "Error: Unexpected finishing reported!")
 }
 
 trait ActorBuffer extends Actor {
   import context.dispatcher
   import actors.ActorBuffer._
 
-  case class ServiceResult(Status: Int, Result: scala.Any)
-  type BufferResult = Map[scala.Any, ServiceResult]
+  type BufferResult = Map[Any, ServiceResult]
   var generalBuffer: BufferResult = Map()
 
   var serviceWorker: ActorRef = _
@@ -32,30 +33,25 @@ trait ActorBuffer extends Actor {
     serviceWorker = system.actorOf(Props(workerClass), name = self.path.name + "_worker")
   }
 
-  def processBufferGeneral(message: scala.Any): Unit = {
+  def getBuffer(message: Any): Option[ServiceResult] = if (generalBuffer.keys.toSet.contains(message)) Some(generalBuffer(message)) else None
+
+  def processBufferGeneral(message: Any): Unit = {
     var result: ServiceResult = null
     message match {
-      case Finished(service: scala.Any, resultComplete: scala.Any) => {
-        if (generalBuffer.keys.toSet.contains(service)) {
-          generalBuffer(service) = ServiceResult(FINISHED, resultComplete)
-          Future(ACK_MSG) pipeTo sender
-        } else {
-          Future(UNEXPECTED_FINISH_MSG) pipeTo sender
-        }
+      case Finished(service: Any, resultComplete: Any) if getBuffer(service).getOrElse("") == "" => Future(UNEXPECTED_FINISH_MSG) pipeTo sender
+      case Finished(service: Any, resultComplete: Any) => {
+        generalBuffer(service) = ServiceResult(FINISHED, resultComplete)
+        Future(ACK_MSG) pipeTo sender
       }
-      case _ => {
-        if (generalBuffer.keys.toSet.contains(message)) {
-          val currentRes = generalBuffer(message)
-          if (currentRes.Status == PROCESSING) {
-            Future(PROCESSING_MSG) pipeTo sender
-          } else if (currentRes.Status == FINISHED) {
-            result = generalBuffer(message)
-            generalBuffer = generalBuffer - message
-            Future(result.Result) pipeTo sender
-          } else {
-            Future(UNEXPECTED_STATUS_MSG) pipeTo sender
-          }
-        } else {
+      case _ => getBuffer(message) match {
+        case Some(buffer) if buffer.Status == PROCESSING => Future(PROCESSING_MSG) pipeTo sender
+        case Some(buffer) if buffer.Status == FINISHED => {
+          result = generalBuffer(message)
+          generalBuffer = generalBuffer - message
+          Future(result.Result) pipeTo sender
+        }
+        case Some(buffer) => Future(UNEXPECTED_STATUS_MSG) pipeTo sender
+        case None => {
           generalBuffer = generalBuffer ++ Map(message -> ServiceResult(PROCESSING, null))
           serviceWorker ! message
           Future(STARTED_MSG) pipeTo sender
